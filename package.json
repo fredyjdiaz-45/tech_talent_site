@@ -1,0 +1,13 @@
+{
+  "name": "usda-tech-static",
+  "version": "1.0.0",
+  "description": "USDA Technology Careers — static HTML + Tailwind CSS (no server)",
+  "scripts": {
+    "build": "tailwindcss -i ./src/input.css -o ./css/styles.css --minify",
+    "watch": "tailwindcss -i ./src/input.css -o ./css/styles.css --watch",
+    "serve": "npx serve ."
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.4"
+  }
+}
