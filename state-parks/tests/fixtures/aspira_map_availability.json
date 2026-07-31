@@ -1,0 +1,21 @@
+{
+  "_comment": "Sample Aspira Connect /api/availability/map response. Shape (resourceAvailabilities, availability==0 meaning AVAILABLE) follows the documented GoingToCamp API; values are synthetic. Replace with a real capture via `cli verify MD`.",
+  "resourceAvailabilities": {
+    "2001": [
+      {"availability": 0, "price": 110.0, "remainingQuota": 1},
+      {"availability": 0, "price": 110.0, "remainingQuota": 1},
+      {"availability": 0, "price": 110.0, "remainingQuota": 1}
+    ],
+    "2002": [
+      {"availability": 0, "price": 95.0, "remainingQuota": 1},
+      {"availability": 1, "price": 95.0, "remainingQuota": 0},
+      {"availability": 0, "price": 95.0, "remainingQuota": 1}
+    ],
+    "2003": [
+      {"availability": 2, "price": 45.0, "remainingQuota": 0},
+      {"availability": 2, "price": 45.0, "remainingQuota": 0},
+      {"availability": 2, "price": 45.0, "remainingQuota": 0}
+    ]
+  },
+  "mapLinkAvailabilities": {}
+}

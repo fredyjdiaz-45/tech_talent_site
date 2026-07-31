@@ -1,0 +1,59 @@
+<!--
+  Trimmed sample of a ReserveAmerica `campsiteCalendar.do` response.
+
+  Hand-built from the platform's documented markup conventions, NOT captured
+  from a live response (see docs/PLATFORMS.md). It pins the parser's contract:
+  a `table#calendar`, one row per site with `td.sn` naming it, and `td.status`
+  cells whose CSS class encodes availability (a = free, r/x/n = not).
+  Replace with a real capture via `cli verify NC --save-fixture`.
+-->
+<html>
+<body>
+<table id="calendar" class="items">
+  <tr class="tbl_head">
+    <th>Site</th>
+    <th>Loop</th>
+    <th>Fri<br/>Sep 4</th>
+    <th>Sat<br/>Sep 5</th>
+    <th>Sun<br/>Sep 6</th>
+    <th>Mon<br/>Sep 7</th>
+  </tr>
+  <tr>
+    <td class="sn"><a href="campsiteDetails.do?contractCode=NC&parkId=3234&siteId=91001">Cabin 1</a></td>
+    <td class="loopName">Cabin Area</td>
+    <td class="status a"><a href="book.do?arrivalDate=09/04/2026">A</a></td>
+    <td class="status a"><a href="book.do?arrivalDate=09/05/2026">A</a></td>
+    <td class="status a"><a href="book.do?arrivalDate=09/06/2026">A</a></td>
+    <td class="status r">R</td>
+    <td>$95.00</td>
+  </tr>
+  <tr>
+    <td class="sn"><a href="campsiteDetails.do?contractCode=NC&parkId=3234&siteId=91002">Cabin 2</a></td>
+    <td class="loopName">Cabin Area</td>
+    <td class="status a"><a href="book.do?arrivalDate=09/04/2026">A</a></td>
+    <td class="status r">R</td>
+    <td class="status a"><a href="book.do?arrivalDate=09/06/2026">A</a></td>
+    <td class="status a"><a href="book.do?arrivalDate=09/07/2026">A</a></td>
+    <td>$95.00</td>
+  </tr>
+  <tr>
+    <td class="sn"><a href="campsiteDetails.do?contractCode=NC&parkId=3234&siteId=91050">Tent Site 14</a></td>
+    <td class="loopName">Loop A</td>
+    <td class="status a"><a href="book.do?arrivalDate=09/04/2026">A</a></td>
+    <td class="status a"><a href="book.do?arrivalDate=09/05/2026">A</a></td>
+    <td class="status a"><a href="book.do?arrivalDate=09/06/2026">A</a></td>
+    <td class="status a"><a href="book.do?arrivalDate=09/07/2026">A</a></td>
+    <td>$25.00</td>
+  </tr>
+  <tr>
+    <td class="sn"><a href="campsiteDetails.do?contractCode=NC&parkId=3234&siteId=91060">Camping Cabin 7</a></td>
+    <td class="loopName">Cabin Area</td>
+    <td class="status n">X</td>
+    <td class="status n">X</td>
+    <td class="status n">X</td>
+    <td class="status n">X</td>
+    <td>$65.00</td>
+  </tr>
+</table>
+</body>
+</html>

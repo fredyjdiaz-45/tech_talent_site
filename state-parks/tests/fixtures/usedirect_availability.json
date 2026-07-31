@@ -1,0 +1,45 @@
+{
+  "_comment": "Sample UseDirect /rdr/rdr/search/availability response. Field names follow the documented RDR shape (Facility.Units[].Slices[].IsFree); values are synthetic. Replace with a real capture via `cli verify VA`.",
+  "Facility": {
+    "FacilityId": 1,
+    "Name": "Douthat State Park",
+    "Latitude": 37.894,
+    "Longitude": -79.8,
+    "Units": {
+      "1001": {
+        "UnitId": 1001,
+        "Name": "Cabin 3",
+        "ShortName": "C3",
+        "IsAda": false,
+        "SleepingUnitCount": 6,
+        "Slices": {
+          "2026-09-04T00:00:00": {"Date": "2026-09-04T00:00:00", "IsFree": true, "Price": 132.0},
+          "2026-09-05T00:00:00": {"Date": "2026-09-05T00:00:00", "IsFree": true, "Price": 132.0},
+          "2026-09-06T00:00:00": {"Date": "2026-09-06T00:00:00", "IsFree": true, "Price": 132.0}
+        }
+      },
+      "1002": {
+        "UnitId": 1002,
+        "Name": "Cabin 4",
+        "IsAda": false,
+        "SleepingUnitCount": 4,
+        "Slices": {
+          "2026-09-04T00:00:00": {"Date": "2026-09-04T00:00:00", "IsFree": true, "Price": 118.0},
+          "2026-09-05T00:00:00": {"Date": "2026-09-05T00:00:00", "IsFree": false, "Price": 118.0},
+          "2026-09-06T00:00:00": {"Date": "2026-09-06T00:00:00", "IsFree": true, "Price": 118.0}
+        }
+      },
+      "1003": {
+        "UnitId": 1003,
+        "Name": "Campsite 22",
+        "IsAda": false,
+        "SleepingUnitCount": 6,
+        "Slices": {
+          "2026-09-04T00:00:00": {"Date": "2026-09-04T00:00:00", "IsFree": true, "Price": 35.0},
+          "2026-09-05T00:00:00": {"Date": "2026-09-05T00:00:00", "IsFree": true, "Price": 35.0},
+          "2026-09-06T00:00:00": {"Date": "2026-09-06T00:00:00", "IsFree": true, "Price": 35.0}
+        }
+      }
+    }
+  }
+}
