@@ -1,0 +1,6 @@
+# Python virtualenvs (the state-parks project is developed in one)
+.venv/
+.venv-*/
+venv/
+__pycache__/
+*.py[cod]
