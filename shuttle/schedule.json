@@ -1,0 +1,54 @@
+{
+  "meta": {
+    "name": "USDA GWCC ↔ Greenbelt Metro Shuttle",
+    "source": "Based on the published ARS GWCC Shuttle Schedule (rev. 3/13/2025). Verify against the official PDF and the USDA Shuttle app before relying on exact minutes.",
+    "sourceUrl": "https://www.ars.usda.gov/northeast-area/docs/visitor-information/rail-service-options/",
+    "timezone": "America/New_York",
+    "serviceDays": [1, 2, 3, 4, 5],
+    "notes": [
+      "Free service for USDA employees and visitors.",
+      "No service on weekends or federal holidays.",
+      "Headway-based: buses run about every 20 minutes across the service window.",
+      "Travel time between GWCC and Greenbelt Metro is roughly 8–12 minutes depending on traffic."
+    ]
+  },
+  "stops": {
+    "gwcc": {
+      "id": "gwcc",
+      "name": "George Washington Carver Center (GWCC)",
+      "short": "GWCC",
+      "address": "5601 Sunnyside Ave, Beltsville, MD 20705",
+      "lat": 39.02063,
+      "lon": -76.92004
+    },
+    "greenbelt": {
+      "id": "greenbelt",
+      "name": "Greenbelt Metro Station",
+      "short": "Greenbelt Metro",
+      "address": "5717 Greenbelt Metro Dr, Greenbelt, MD 20740",
+      "line": "Green / Yellow",
+      "lat": 39.01143,
+      "lon": -76.91136
+    }
+  },
+  "directions": {
+    "to_greenbelt": {
+      "id": "to_greenbelt",
+      "label": "GWCC → Greenbelt Metro",
+      "origin": "gwcc",
+      "destination": "greenbelt",
+      "headwayMinutes": 20,
+      "firstDeparture": "06:00",
+      "lastDeparture": "18:20"
+    },
+    "to_gwcc": {
+      "id": "to_gwcc",
+      "label": "Greenbelt Metro → GWCC",
+      "origin": "greenbelt",
+      "destination": "gwcc",
+      "headwayMinutes": 20,
+      "firstDeparture": "06:15",
+      "lastDeparture": "18:15"
+    }
+  }
+}

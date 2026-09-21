@@ -1,0 +1,11 @@
+{
+  "generatedAt": null,
+  "window": "5 min",
+  "summary": {
+    "samples": 0,
+    "onTimePct": null,
+    "avgWaitMin": null,
+    "coveragePct": null
+  },
+  "byHour": {}
+}

@@ -1,0 +1,47 @@
+name: Shuttle performance monitor
+
+# Polls the USDA GWCC <-> Greenbelt shuttle live feed and commits performance data.
+# Runs on GitHub-hosted runners, which have open outbound network access to the
+# Ride Systems feed. Adjust the cron cadence to taste (every 10 min during the
+# work day shown below). GitHub only runs scheduled workflows from the default branch.
+
+on:
+  schedule:
+    # Every 10 minutes, 10:00-23:00 UTC, Mon-Fri (~6am-7pm US Eastern).
+    - cron: '*/10 10-23 * * 1-5'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: shuttle-monitor
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Collect sample
+        env:
+          RIDESYSTEMS_BASE: ${{ vars.RIDESYSTEMS_BASE }}
+          RIDESYSTEMS_APIKEY: ${{ secrets.RIDESYSTEMS_APIKEY }}
+        run: node scripts/collect-shuttle.mjs
+
+      - name: Commit data
+        run: |
+          git config user.name  "shuttle-monitor[bot]"
+          git config user.email "shuttle-monitor@users.noreply.github.com"
+          git add data/samples.ndjson data/performance.json
+          if git diff --staged --quiet; then
+            echo "No data changes."
+          else
+            git commit -m "chore(data): shuttle performance sample $(date -u +%FT%TZ)"
+            git push
+          fi

@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>USDA GWCC ↔ Greenbelt Shuttle Tracker</title>
+<meta name="description" content="Live tracker and performance monitor for the USDA George Washington Carver Center (GWCC) shuttle to the Greenbelt Metro station. Next-departure countdowns, live vehicle positions, and on-time performance." />
+<meta name="color-scheme" content="light dark" />
+
+<meta property="og:title" content="USDA GWCC ↔ Greenbelt Shuttle Tracker" />
+<meta property="og:description" content="Next-departure countdowns, live shuttle positions, and on-time performance for the USDA GWCC ↔ Greenbelt Metro shuttle." />
+<meta property="og:type" content="website" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+      integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<style>
+:root{
+  --paper:#FAF8F4; --paper-2:#F1ECE3; --paper-3:#E7E0D2;
+  --ink:#1A1A1A; --ink-2:#3A3A3A; --muted:#6B6B66;
+  --line:#D8D2C2; --line-2:#C5BCA6;
+  --red:#D6202F; --red-dk:#A8141F; --navy:#0A2240; --navy-2:#0F2C50;
+  --gold:#B58A2E; --cream:#F5EFDF;
+  --green:#1E7A46; --amber:#B5791E; --card:#fff;
+  --shadow:0 1px 2px rgba(10,34,64,.06),0 8px 24px rgba(10,34,64,.08);
+}
+:root:not([data-theme="light"]) { }
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0B1626; --paper-2:#0F1E33; --paper-3:#14263f;
+    --ink:#F2EFE8; --ink-2:#D6D2C8; --muted:#9AA3B0;
+    --line:#22334d; --line-2:#2c405f;
+    --cream:#12233b; --card:#0F1E33;
+    --green:#3FBF74; --amber:#E0A93E;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0B1626; --paper-2:#0F1E33; --paper-3:#14263f;
+  --ink:#F2EFE8; --ink-2:#D6D2C8; --muted:#9AA3B0;
+  --line:#22334d; --line-2:#2c405f;
+  --cream:#12233b; --card:#0F1E33;
+  --green:#3FBF74; --amber:#E0A93E;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:'Source Sans 3','Public Sans',Arial,sans-serif;
+  line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{font-family:'Merriweather',Georgia,serif; line-height:1.15; margin:0}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+
+/* Header */
+header.site{background:var(--navy);color:#fff;border-bottom:3px solid var(--red)}
+header.site .wrap{display:flex;align-items:center;gap:14px;padding:14px 16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.seal{width:40px;height:40px;border-radius:50%;background:var(--cream);display:grid;place-items:center;flex:0 0 auto;
+  color:var(--navy);font-weight:900;font-family:'Merriweather',serif;border:2px solid var(--gold)}
+.brand h1{font-size:19px;color:#fff}
+.brand .sub{font-size:12.5px;color:#c9d4e4;font-family:'Source Sans 3',sans-serif;font-weight:600;letter-spacing:.02em}
+.hgrow{flex:1 1 auto}
+.status-pill{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#eaf0f8;
+  padding:6px 11px;border-radius:999px;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);box-shadow:0 0 0 0 rgba(63,191,116,.5)}
+.dot.live{background:var(--green);animation:pulse 2s infinite}
+.dot.sched{background:var(--amber)}
+.dot.off{background:var(--muted)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(63,191,116,.5)}70%{box-shadow:0 0 0 7px rgba(63,191,116,0)}100%{box-shadow:0 0 0 0 rgba(63,191,116,0)}}
+
+/* Tabs */
+nav.tabs{background:var(--paper-2);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:500}
+nav.tabs .wrap{display:flex;gap:2px;overflow-x:auto}
+nav.tabs button{appearance:none;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);
+  font:inherit;font-weight:700;font-size:14.5px;padding:13px 16px;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--navy);border-bottom-color:var(--red)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) nav.tabs button[aria-selected="true"]{color:var(--ink)}}
+:root[data-theme="dark"] nav.tabs button[aria-selected="true"]{color:var(--ink)}
+
+main{padding:22px 0 60px}
+.panel[hidden]{display:none}
+section.block{margin:0 0 26px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin:0 0 6px}
+.lead{color:var(--ink-2);max-width:62ch}
+
+/* Direction toggle */
+.dirtoggle{display:inline-flex;background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;margin:6px 0 18px}
+.dirtoggle button{appearance:none;border:0;background:none;font:inherit;font-weight:700;font-size:14px;color:var(--muted);
+  padding:9px 15px;border-radius:9px;cursor:pointer}
+.dirtoggle button[aria-pressed="true"]{background:var(--card);color:var(--navy);box-shadow:var(--shadow)}
+:root[data-theme="dark"] .dirtoggle button[aria-pressed="true"]{color:var(--ink)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .dirtoggle button[aria-pressed="true"]{color:var(--ink)}}
+
+/* Next-departure hero */
+.hero{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);
+  padding:22px;display:grid;grid-template-columns:1.2fr 1fr;gap:22px}
+@media(max-width:640px){.hero{grid-template-columns:1fr;padding:18px}}
+.hero .route{font-size:13px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:8px}
+.hero .route b{color:var(--ink)}
+.countdown{font-family:'Merriweather',serif;font-weight:900;font-size:64px;line-height:1;color:var(--navy);margin:8px 0 2px}
+:root[data-theme="dark"] .countdown{color:var(--ink)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .countdown{color:var(--ink)}}
+@media(max-width:640px){.countdown{font-size:52px}}
+.countdown small{font-size:22px;font-weight:700;color:var(--muted);margin-left:6px}
+.leaves-at{font-size:15px;color:var(--ink-2);font-weight:600}
+.eta-src{margin-top:10px;font-size:12.5px;color:var(--muted)}
+.upcoming{border-left:1px solid var(--line);padding-left:22px}
+@media(max-width:640px){.upcoming{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:16px}}
+.upcoming h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px;font-family:'Source Sans 3',sans-serif}
+.upcoming ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.upcoming li{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--line)}
+.upcoming li:last-child{border-bottom:0}
+.upcoming .t{font-weight:700;font-variant-numeric:tabular-nums}
+.upcoming .rel{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--paper-3);color:var(--ink-2)}
+.badge.live{background:rgba(30,122,70,.14);color:var(--green)}
+
+/* generic cards / grid */
+.grid{display:grid;gap:16px}
+.grid.k2{grid-template-columns:repeat(2,1fr)}
+.grid.k3{grid-template-columns:repeat(3,1fr)}
+.grid.k4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:760px){.grid.k3,.grid.k4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:460px){.grid.k2,.grid.k3,.grid.k4{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.stat{padding:16px}
+.stat .kpi{font-family:'Merriweather',serif;font-weight:900;font-size:34px;color:var(--navy);line-height:1}
+:root[data-theme="dark"] .stat .kpi{color:var(--ink)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .stat .kpi{color:var(--ink)}}
+.stat .kpi.good{color:var(--green)} .stat .kpi.warn{color:var(--amber)} .stat .kpi.bad{color:var(--red)}
+.stat .lbl{font-size:12.5px;color:var(--muted);font-weight:600;margin-top:6px}
+
+#map{height:420px;border-radius:14px;border:1px solid var(--line);overflow:hidden;background:var(--paper-2)}
+.map-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:12.5px;color:var(--muted)}
+.map-legend span{display:inline-flex;align-items:center;gap:6px}
+.chip{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+table.sched{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14.5px}
+table.sched th,table.sched td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line)}
+table.sched th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+table.sched tr.now td{background:rgba(214,32,47,.06)}
+table.sched td .now-tag{font-size:11px;font-weight:700;color:var(--red);margin-left:8px}
+
+.perf-chart{display:flex;align-items:flex-end;gap:4px;height:120px;padding-top:8px}
+.perf-chart .bar{flex:1;background:var(--navy);border-radius:3px 3px 0 0;min-height:2px;position:relative}
+:root[data-theme="dark"] .perf-chart .bar{background:var(--gold)}
+.perf-chart .bar.good{background:var(--green)}
+.perf-chart .bar.warn{background:var(--amber)}
+.perf-chart .bar.bad{background:var(--red)}
+.perf-axis{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px}
+
+.note{background:var(--cream);border:1px solid var(--line-2);border-radius:12px;padding:14px 16px;font-size:14px;color:var(--ink-2)}
+.note strong{color:var(--ink)}
+.small{font-size:13px;color:var(--muted)}
+.btn{appearance:none;font:inherit;font-weight:700;font-size:14px;border-radius:10px;padding:9px 15px;cursor:pointer;border:1px solid var(--line-2);background:var(--card);color:var(--ink)}
+.btn.primary{background:var(--red);border-color:var(--red-dk);color:#fff}
+.btn.ghost{background:transparent}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.field{display:flex;flex-direction:column;gap:5px;margin:0 0 12px}
+.field label{font-size:12.5px;font-weight:700;color:var(--ink-2)}
+.field input{font:inherit;padding:9px 11px;border:1px solid var(--line-2);border-radius:9px;background:var(--paper);color:var(--ink)}
+code{font-family:ui-monospace,Menlo,monospace;background:var(--paper-3);padding:1px 6px;border-radius:5px;font-size:13px}
+footer.site{border-top:1px solid var(--line);color:var(--muted);font-size:13px;padding:22px 0 40px}
+footer.site a{color:var(--red);font-weight:600;text-decoration:none}
+.disclaimer{border-left:3px solid var(--gold);padding:2px 0 2px 12px;margin:14px 0;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <div class="brand">
+      <div class="seal" aria-hidden="true">USDA</div>
+      <div>
+        <h1>GWCC ↔ Greenbelt Shuttle</h1>
+        <div class="sub">Live tracker &amp; on-time performance</div>
+      </div>
+    </div>
+    <div class="hgrow"></div>
+    <div class="status-pill"><span id="modeDot" class="dot off"></span><span id="modeText">Loading…</span></div>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="wrap" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="board">Next shuttle</button>
+    <button role="tab" aria-selected="false" data-tab="map">Live map</button>
+    <button role="tab" aria-selected="false" data-tab="schedule">Full schedule</button>
+    <button role="tab" aria-selected="false" data-tab="performance">Performance</button>
+    <button role="tab" aria-selected="false" data-tab="about">About &amp; data</button>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <!-- BOARD -->
+  <div class="panel" id="panel-board" role="tabpanel">
+    <section class="block">
+      <div class="dirtoggle" role="group" aria-label="Direction">
+        <button data-dir="to_greenbelt" aria-pressed="true">GWCC → Greenbelt</button>
+        <button data-dir="to_gwcc" aria-pressed="false">Greenbelt → GWCC</button>
+      </div>
+
+      <div class="hero">
+        <div>
+          <div class="route" id="heroRoute">Next departure</div>
+          <div class="countdown" id="cdMain">—<small id="cdUnit"></small></div>
+          <div class="leaves-at" id="cdLeaves"></div>
+          <div class="eta-src" id="cdSrc"></div>
+        </div>
+        <div class="upcoming">
+          <h3>Then</h3>
+          <ul id="upcomingList"><li><span class="t">—</span></li></ul>
+        </div>
+      </div>
+      <p class="small" id="serviceMsg" style="margin-top:12px"></p>
+    </section>
+
+    <section class="block grid k3" id="boardStats"></section>
+
+    <div class="disclaimer" id="boardDisclaimer"></div>
+  </div>
+
+  <!-- MAP -->
+  <div class="panel" id="panel-map" role="tabpanel" hidden>
+    <section class="block">
+      <p class="eyebrow">Live positions</p>
+      <div id="map"></div>
+      <div class="map-legend">
+        <span><i class="chip" style="background:#D6202F"></i> Shuttle (live)</span>
+        <span><i class="chip" style="background:#0A2240"></i> GWCC</span>
+        <span><i class="chip" style="background:#1E7A46"></i> Greenbelt Metro</span>
+      </div>
+      <p class="small" id="mapMsg" style="margin-top:12px"></p>
+    </section>
+  </div>
+
+  <!-- SCHEDULE -->
+  <div class="panel" id="panel-schedule" role="tabpanel" hidden>
+    <section class="block">
+      <p class="eyebrow">Timetable</p>
+      <div class="dirtoggle" role="group" aria-label="Direction">
+        <button data-dir="to_greenbelt" aria-pressed="true">GWCC → Greenbelt</button>
+        <button data-dir="to_gwcc" aria-pressed="false">Greenbelt → GWCC</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="sched"><thead><tr><th>Departs</th><th>Arrives (est.)</th><th></th></tr></thead>
+        <tbody id="schedBody"></tbody></table>
+      </div>
+      <p class="small" id="schedNotes" style="margin-top:12px"></p>
+    </section>
+  </div>
+
+  <!-- PERFORMANCE -->
+  <div class="panel" id="panel-performance" role="tabpanel" hidden>
+    <section class="block">
+      <p class="eyebrow">Service performance</p>
+      <p class="lead">On-time performance and wait times, measured against the published schedule. Central figures come from the automated monitor when available; otherwise your own device's observations are shown.</p>
+    </section>
+    <section class="block grid k4" id="perfStats"></section>
+    <section class="block card">
+      <h3 style="font-size:16px;margin-bottom:4px">On-time rate by hour</h3>
+      <p class="small" style="margin-bottom:8px" id="perfChartCaption">Share of departures within 5 minutes of schedule.</p>
+      <div class="perf-chart" id="perfChart"></div>
+      <div class="perf-axis"><span>6a</span><span>9a</span><span>12p</span><span>3p</span><span>6p</span></div>
+    </section>
+    <section class="block card">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <h3 style="font-size:16px">Your observations</h3>
+          <p class="small" id="obsCount">No observations logged yet.</p>
+        </div>
+        <div class="row">
+          <button class="btn primary" id="logOnTime">Log on-time</button>
+          <button class="btn" id="logLate">Log late</button>
+          <button class="btn ghost" id="clearObs">Clear</button>
+        </div>
+      </div>
+      <p class="small" style="margin-top:10px">Tap when you catch a shuttle to build a public-spirited, crowd-checked record of how the service is actually running. Stored only in this browser.</p>
+    </section>
+  </div>
+
+  <!-- ABOUT -->
+  <div class="panel" id="panel-about" role="tabpanel" hidden>
+    <section class="block">
+      <p class="eyebrow">About this tool</p>
+      <h2 style="font-size:24px;margin-bottom:10px">The USDA GWCC shuttle, in one page</h2>
+      <p class="lead">A free service for USDA employees and visitors connecting the George Washington Carver Center at 5601 Sunnyside Ave, Beltsville with the Greenbelt Metro station (Green / Yellow line). This unofficial tracker shows next-departure countdowns, live vehicle positions, and how reliably the service runs.</p>
+    </section>
+
+    <section class="block grid k2">
+      <div class="card">
+        <h3 style="font-size:16px;margin-bottom:8px">Where the data comes from</h3>
+        <ul class="small" style="line-height:1.7;padding-left:18px">
+          <li><strong>Schedule</strong> — the published ARS GWCC shuttle timetable (rev. 3/13/2025).</li>
+          <li><strong>Live positions &amp; ETAs</strong> — the USDA shuttle GPS feed (Ride Systems / <code>usda.ridesystems.net</code>), read directly by your browser when reachable.</li>
+          <li><strong>Performance</strong> — computed by comparing observed departures with the schedule, logged over time.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="font-size:16px;margin-bottom:8px">Live data settings</h3>
+        <div class="field">
+          <label for="apiKey">Ride Systems API key</label>
+          <input id="apiKey" placeholder="e.g. 8882812681" autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="field">
+          <label for="apiBase">Feed base URL</label>
+          <input id="apiBase" placeholder="https://usda.ridesystems.net" autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="row">
+          <button class="btn primary" id="saveApi">Save &amp; retry live</button>
+          <button class="btn ghost" id="resetApi">Reset</button>
+        </div>
+        <p class="small" style="margin-top:10px">The live feed only activates in a real browser on the open internet (it is blocked in some restricted networks). The app always falls back to the published schedule.</p>
+      </div>
+    </section>
+
+    <section class="block note">
+      <strong>Unofficial.</strong> This is a community tool, not an official USDA product. Always confirm times with the official
+      <a href="https://usda.ridesystems.net" target="_blank" rel="noopener">USDA Shuttle tracker / app</a>
+      and the <a href="https://www.ars.usda.gov/northeast-area/docs/visitor-information/rail-service-options/" target="_blank" rel="noopener">ARS Rail Service Options</a> page.
+    </section>
+  </div>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="row" style="justify-content:space-between">
+      <div>USDA GWCC ↔ Greenbelt Shuttle Tracker · unofficial community tool</div>
+      <button class="btn ghost" id="themeToggle" aria-label="Toggle theme">Toggle theme</button>
+    </div>
+    <p class="small" style="margin-top:10px">Times shown in Eastern Time. Not affiliated with or endorsed by USDA. Data may be incomplete or delayed.</p>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"
+        integrity="sha512-BwHfrr4c9kmRkLw6iXFdzcdWV/PGkVgiIyIWLLlTSXzWQzxuSg4DiQUCpauz/EWjgk5TYQqX/kvn9pG1NpYfg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="app.js" defer></script>
+</body>
+</html>
