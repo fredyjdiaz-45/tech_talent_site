@@ -1,51 +1,48 @@
-# USDA GWCC ↔ Greenbelt Shuttle Tracker
+# USDA GWCC ↔ Greenbelt Shuttle
 
 An unofficial, public, static web app for USDA employees who work out of the
 **George Washington Carver Center (GWCC)**, 5601 Sunnyside Ave, Beltsville, MD,
 and commute via the **Greenbelt Metro** station (Green / Yellow line).
 
-Open `shuttle/index.html` — no build step, hosts anywhere (GitHub Pages, Netlify, S3).
+Open `shuttle/index.html` — no build step; hosts anywhere (GitHub Pages, Netlify, S3).
 
 ## What it does
 
-- **Next shuttle** — live countdown to the next departure in each direction.
-- **Live map** — real-time shuttle positions when the GPS feed is reachable.
-- **Full schedule** — the published timetable with the next departure highlighted.
-- **Performance** — on-time rate, average wait and coverage, by hour.
-- **Observations** — riders can log on-time/late catches (stored per-device).
+- **Next shuttle** — live countdown to the next departure in each direction, from the official schedule.
+- **Map & stops** — the real GWCC and Greenbelt Metro stop locations and route.
+- **Full schedule** — the timetable with the next departure highlighted.
+- **Performance** — crowd-sourced on-time rate from riders' own logs.
 
-## The data
+## The data (and an honest note on "live" tracking)
 
 | Layer | Source |
 |---|---|
-| Schedule | Published ARS GWCC shuttle timetable (rev. 3/13/2025) — [`schedule.json`](schedule.json). ~every 20 min, weekdays, 6:00 AM–6:20 PM. |
-| Live positions / ETAs | USDA shuttle GPS feed, Ride Systems / TransLoc: `https://usda.ridesystems.net` (endpoint `Services/JSONPRelay.svc/*`). Read **client-side** by the browser, so it works on the open internet even though the site is static. |
-| Performance | Computed by comparing the live feed against the schedule over time (see the monitor below). |
+| Schedule & predictions | Official published ARS GWCC shuttle timetable (rev. 3/13/2025) — [`schedule.json`](schedule.json). ~every 20 min, weekdays. |
+| Map | Real stop coordinates on OpenStreetMap tiles. |
+| Performance | Riders' opt-in on-time / late logs, stored per-device. |
 
-The app **always** works in schedule mode; live data upgrades it when available.
-Some restricted networks (and this build sandbox) block `ridesystems.net`, so the
-live map/ETAs only light up in a normal browser. The API key and base URL are
-configurable under **About › Live data settings**, or via `?apikey=...&base=...`.
+**There is no public, unauthenticated real-time GPS feed for this shuttle.**
+It is run on **BusWhere / WheresTheBus** (the official *USDA Shuttle* app,
+`com.bishoppeaktech.android.usdashuttle`). BusWhere's only documented API is the
+authenticated school-bus "parent app" (email/password → session), and the public
+`buswhere.com/<org>` viewer URLs now just redirect to their marketing site. Live
+vehicle positions therefore live only inside the official app, which this site
+links to rather than fake a feed. (An earlier draft pointed at
+`usda.ridesystems.net`; that host is a dead placeholder and was never the real feed.)
 
-## Automated performance monitor (optional)
+If you have official access to the shuttle's live data (an app account or an
+agency-provided feed URL), a small serverless proxy could relay positions into
+this page — that's the only way to add a live map here.
 
-[`scripts/collect-shuttle.mjs`](../scripts/collect-shuttle.mjs) polls the live
-feed, appends a sample to `data/samples.ndjson`, and recomputes the public
-rollup at [`data/performance.json`](../data/performance.json) that the app reads.
+## Deploy
 
-Run it anywhere with open network access. It's wired to GitHub Actions in
-[`.github/workflows/shuttle-monitor.yml`](../.github/workflows/shuttle-monitor.yml)
-(every 10 min on weekday work hours):
-
-1. Enable the workflow (scheduled runs only fire from the default branch).
-2. Optional: set repo **Variable** `RIDESYSTEMS_BASE` and **Secret** `RIDESYSTEMS_APIKEY`
-   if the defaults don't match the current USDA feed.
-3. The action commits `data/*` back to the repo; the app picks it up automatically.
-
-Manual run: `node scripts/collect-shuttle.mjs`
+- **GitHub Pages:** the workflow at `.github/workflows/pages.yml` publishes the repo
+  root on every push to `main` (app at `/shuttle/`).
+- **Netlify:** `netlify.toml` serves the app at the site root; git-link the repo or
+  run `netlify deploy --prod --dir=.`.
 
 ## Disclaimer
 
-Community tool, not affiliated with or endorsed by USDA. Always confirm times
-with the official USDA Shuttle app / `usda.ridesystems.net` and the
+Community tool, not affiliated with or endorsed by USDA. Confirm times with the
+official USDA Shuttle app and the
 [ARS Rail Service Options](https://www.ars.usda.gov/northeast-area/docs/visitor-information/rail-service-options/) page.

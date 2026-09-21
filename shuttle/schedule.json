@@ -1,7 +1,7 @@
 {
   "meta": {
     "name": "USDA GWCC ↔ Greenbelt Metro Shuttle",
-    "source": "Based on the published ARS GWCC Shuttle Schedule (rev. 3/13/2025). Verify against the official PDF and the USDA Shuttle app before relying on exact minutes.",
+    "source": "Based on the official published ARS GWCC Shuttle Schedule (rev. 3/13/2025). Verify exact minutes against the official USDA Shuttle app.",
     "sourceUrl": "https://www.ars.usda.gov/northeast-area/docs/visitor-information/rail-service-options/",
     "timezone": "America/New_York",
     "serviceDays": [1, 2, 3, 4, 5],

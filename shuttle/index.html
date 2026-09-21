@@ -180,7 +180,7 @@ footer.site a{color:var(--red);font-weight:600;text-decoration:none}
       <div class="seal" aria-hidden="true">USDA</div>
       <div>
         <h1>GWCC ↔ Greenbelt Shuttle</h1>
-        <div class="sub">Live tracker &amp; on-time performance</div>
+        <div class="sub">Schedule, stops &amp; rider reports</div>
       </div>
     </div>
     <div class="hgrow"></div>
@@ -191,7 +191,7 @@ footer.site a{color:var(--red);font-weight:600;text-decoration:none}
 <nav class="tabs" aria-label="Sections">
   <div class="wrap" role="tablist">
     <button role="tab" aria-selected="true" data-tab="board">Next shuttle</button>
-    <button role="tab" aria-selected="false" data-tab="map">Live map</button>
+    <button role="tab" aria-selected="false" data-tab="map">Map &amp; stops</button>
     <button role="tab" aria-selected="false" data-tab="schedule">Full schedule</button>
     <button role="tab" aria-selected="false" data-tab="performance">Performance</button>
     <button role="tab" aria-selected="false" data-tab="about">About &amp; data</button>
@@ -225,20 +225,29 @@ footer.site a{color:var(--red);font-weight:600;text-decoration:none}
 
     <section class="block grid k3" id="boardStats"></section>
 
+    <section class="block note" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:space-between">
+      <div><strong>Want live bus positions?</strong> Real-time GPS for this shuttle is published only through the official USDA Shuttle app.</div>
+      <div class="row">
+        <a class="btn primary" data-app="ios" target="_blank" rel="noopener">iPhone app</a>
+        <a class="btn" data-app="android" target="_blank" rel="noopener">Android app</a>
+      </div>
+    </section>
+
     <div class="disclaimer" id="boardDisclaimer"></div>
   </div>
 
   <!-- MAP -->
   <div class="panel" id="panel-map" role="tabpanel" hidden>
     <section class="block">
-      <p class="eyebrow">Live positions</p>
+      <p class="eyebrow">Stops &amp; route</p>
       <div id="map"></div>
       <div class="map-legend">
-        <span><i class="chip" style="background:#D6202F"></i> Shuttle (live)</span>
         <span><i class="chip" style="background:#0A2240"></i> GWCC</span>
         <span><i class="chip" style="background:#1E7A46"></i> Greenbelt Metro</span>
+        <span><i class="chip" style="background:#0A2240;opacity:.5"></i> Route (approx.)</span>
       </div>
-      <p class="small" id="mapMsg" style="margin-top:12px"></p>
+      <p class="small" style="margin-top:12px">Live vehicle positions aren't publicly available for this shuttle — track buses in real time with the
+        <a data-app="ios" target="_blank" rel="noopener">official USDA Shuttle app</a>.</p>
     </section>
   </div>
 
@@ -262,7 +271,7 @@ footer.site a{color:var(--red);font-weight:600;text-decoration:none}
   <div class="panel" id="panel-performance" role="tabpanel" hidden>
     <section class="block">
       <p class="eyebrow">Service performance</p>
-      <p class="lead">On-time performance and wait times, measured against the published schedule. Central figures come from the automated monitor when available; otherwise your own device's observations are shown.</p>
+      <p class="lead">Crowd-sourced reliability: log each ride as on-time or late and this page builds an on-time picture over time. Stored on your device — a public, honest record of how the service actually runs.</p>
     </section>
     <section class="block grid k4" id="perfStats"></section>
     <section class="block card">
@@ -292,40 +301,31 @@ footer.site a{color:var(--red);font-weight:600;text-decoration:none}
     <section class="block">
       <p class="eyebrow">About this tool</p>
       <h2 style="font-size:24px;margin-bottom:10px">The USDA GWCC shuttle, in one page</h2>
-      <p class="lead">A free service for USDA employees and visitors connecting the George Washington Carver Center at 5601 Sunnyside Ave, Beltsville with the Greenbelt Metro station (Green / Yellow line). This unofficial tracker shows next-departure countdowns, live vehicle positions, and how reliably the service runs.</p>
+      <p class="lead">A free service for USDA employees and visitors connecting the George Washington Carver Center at 5601 Sunnyside Ave, Beltsville with the Greenbelt Metro station (Green / Yellow line). This unofficial tracker shows next-departure countdowns from the official schedule, a stop map, and crowd-sourced reliability.</p>
     </section>
 
     <section class="block grid k2">
       <div class="card">
         <h3 style="font-size:16px;margin-bottom:8px">Where the data comes from</h3>
         <ul class="small" style="line-height:1.7;padding-left:18px">
-          <li><strong>Schedule</strong> — the published ARS GWCC shuttle timetable (rev. 3/13/2025).</li>
-          <li><strong>Live positions &amp; ETAs</strong> — the USDA shuttle GPS feed (Ride Systems / <code>usda.ridesystems.net</code>), read directly by your browser when reachable.</li>
-          <li><strong>Performance</strong> — computed by comparing observed departures with the schedule, logged over time.</li>
+          <li><strong>Schedule &amp; predictions</strong> — the official published ARS GWCC shuttle timetable (rev. 3/13/2025). All countdowns are computed from it.</li>
+          <li><strong>Map</strong> — the real GWCC and Greenbelt Metro stop locations, on OpenStreetMap.</li>
+          <li><strong>Performance</strong> — crowd-sourced from riders' own on-time / late logs (opt-in, stored on your device).</li>
         </ul>
       </div>
       <div class="card">
-        <h3 style="font-size:16px;margin-bottom:8px">Live data settings</h3>
-        <div class="field">
-          <label for="apiKey">Ride Systems API key</label>
-          <input id="apiKey" placeholder="e.g. 8882812681" autocomplete="off" spellcheck="false" />
-        </div>
-        <div class="field">
-          <label for="apiBase">Feed base URL</label>
-          <input id="apiBase" placeholder="https://usda.ridesystems.net" autocomplete="off" spellcheck="false" />
-        </div>
+        <h3 style="font-size:16px;margin-bottom:8px">Live bus tracking</h3>
+        <p class="small" style="margin-bottom:12px">Real-time GPS positions for this shuttle are published only through the official USDA Shuttle app (powered by BusWhere). There is no public web feed, so this site can't show live buses — use the app for that:</p>
         <div class="row">
-          <button class="btn primary" id="saveApi">Save &amp; retry live</button>
-          <button class="btn ghost" id="resetApi">Reset</button>
+          <a class="btn primary" data-app="ios" target="_blank" rel="noopener">Download for iPhone</a>
+          <a class="btn" data-app="android" target="_blank" rel="noopener">Download for Android</a>
         </div>
-        <p class="small" style="margin-top:10px">The live feed only activates in a real browser on the open internet (it is blocked in some restricted networks). The app always falls back to the published schedule.</p>
       </div>
     </section>
 
     <section class="block note">
-      <strong>Unofficial.</strong> This is a community tool, not an official USDA product. Always confirm times with the official
-      <a href="https://usda.ridesystems.net" target="_blank" rel="noopener">USDA Shuttle tracker / app</a>
-      and the <a href="https://www.ars.usda.gov/northeast-area/docs/visitor-information/rail-service-options/" target="_blank" rel="noopener">ARS Rail Service Options</a> page.
+      <strong>Unofficial.</strong> This is a community tool, not an official USDA product. Always confirm times with the official USDA Shuttle app and the
+      <a href="https://www.ars.usda.gov/northeast-area/docs/visitor-information/rail-service-options/" target="_blank" rel="noopener">ARS Rail Service Options</a> page.
     </section>
   </div>
 
