@@ -1,0 +1,11 @@
+# Deploy the repo root as a static site. The shuttle app lives in /shuttle/ and
+# reads /data/performance.json, so the whole repo root is the publish directory.
+[build]
+  publish = "."
+
+# Serve the shuttle tracker at the site root for a clean public URL.
+# The careers page remains available at /index.html; the app at /shuttle/.
+[[redirects]]
+  from = "/"
+  to = "/shuttle/index.html"
+  status = 200
