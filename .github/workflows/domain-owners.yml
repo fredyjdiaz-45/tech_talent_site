@@ -23,7 +23,7 @@ jobs:
         env:
           DOMAINS: ${{ inputs.domains }}
         run: |
-          echo "$DOMAINS" | node domain-owner/owner.mjs > owners.csv
+          echo "$DOMAINS" | node domain-owner/owner.mjs | tee owners.csv
           { echo "\`\`\`"; column -s, -t < owners.csv; echo "\`\`\`"; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
