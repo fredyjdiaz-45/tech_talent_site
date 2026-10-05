@@ -1,0 +1,31 @@
+name: Domain owners
+
+# Actions → Domain owners → Run workflow → paste domains → download the owners CSV from the run.
+on:
+  workflow_dispatch:
+    inputs:
+      domains:
+        description: Domains separated by spaces, commas or newlines
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  lookup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Look up owners
+        env:
+          DOMAINS: ${{ inputs.domains }}
+        run: |
+          echo "$DOMAINS" | node domain-owner/owner.mjs > owners.csv
+          { echo "\`\`\`"; column -s, -t < owners.csv; echo "\`\`\`"; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: owners
+          path: owners.csv

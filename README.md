@@ -42,3 +42,13 @@ npm run watch
 You can also use **Tailwind utility classes** directly in `index.html` (e.g. `bg-usda-navy`, `text-usda-red`, `font-serif`, `max-w-content`) — they're scanned from `index.html` and `js/` on build. Preflight (Tailwind's reset) is intentionally **off** so the existing design renders exactly; utilities still apply.
 
 > Why is `css/styles.css` checked in? So the page renders with zero build steps for preview/hosting. Running `npm run build` regenerates it from `src/input.css`.
+
+## Domain owner lookup
+
+`domain-owner/owner.mjs` finds who owns a list of domains (no deps, no API keys) and prints CSV: registrant org from RDAP, falling back to the TLS certificate's Organization when WHOIS is privacy-redacted.
+
+- **Run in GitHub:** Actions → *Domain owners* → *Run workflow*, paste domains, download the `owners` CSV artifact (also shown in the run summary).
+- **Run locally:** `node domain-owner/owner.mjs domains.txt > owners.csv`
+- **Test:** `node --test domain-owner/owner.test.mjs`
+
+A blank `owner` means the registrant is hidden behind a privacy service and the site uses a basic (DV) certificate.
