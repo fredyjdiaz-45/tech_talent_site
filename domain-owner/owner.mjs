@@ -38,15 +38,24 @@ export function parseRdap(...docs) {
 }
 
 const getJson = async (url) => {
-  const res = await fetch(url, { headers: { accept: 'application/rdap+json' }, signal: AbortSignal.timeout(15000) });
-  if (!res.ok) throw new Error(`RDAP ${res.status}`);
+  const res = await fetch(url, { headers: { accept: 'application/rdap+json, application/json', 'user-agent': 'domain-owner/1.0' },
+    signal: AbortSignal.timeout(15000) });
+  if (!res.ok) throw new Error(`RDAP ${res.status} ${new URL(url).host}`);
   return res.json();
 };
 
+// IANA's official TLD -> registry RDAP server list, fetched once per run.
+let bootstrap;
+export const rdapBase = (services, domain) =>
+  services.find(([tlds]) => tlds.includes(domain.split('.').pop()))?.[1][0];
+
 async function rdap(domain) {
-  // rdap.org redirects to the right registry. Thin registries (.com/.net) only know the registrar,
+  bootstrap ??= getJson('https://data.iana.org/rdap/dns.json');
+  const base = rdapBase((await bootstrap).services, domain);
+  if (!base) throw new Error('no RDAP server for TLD');
+  // Thin registries (.com/.net) only know the registrar,
   // so follow the "related" link to the registrar's RDAP for registrant details.
-  const registry = await getJson(`https://rdap.org/domain/${domain}`);
+  const registry = await getJson(`${base.replace(/\/?$/, '/')}domain/${domain}`);
   const link = registry.links?.find((l) => l.rel === 'related' && /rdap/.test(l.type ?? l.href));
   const registrar = link ? await getJson(link.href).catch(() => null) : null;
   return parseRdap(...[registrar, registry].filter(Boolean));

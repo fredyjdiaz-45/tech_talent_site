@@ -1,7 +1,7 @@
 // node --test domain-owner/
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseRdap } from './owner.mjs';
+import { parseRdap, rdapBase } from './owner.mjs';
 
 const card = (role, fn, org, email) => ({ roles: [role], vcardArray: ['vcard', [
   ['version', {}, 'text', '4.0'], ['fn', {}, 'text', fn], ['org', {}, 'text', org], ['email', {}, 'text', email]]] });
@@ -17,4 +17,11 @@ test('registrant org from registrar RDAP, registrar + date from registry', () =>
 test('privacy-redacted registrant yields empty owner', () => {
   const doc = { entities: [card('registrant', 'REDACTED FOR PRIVACY', 'Privacy service provided by Withheld for Privacy ehf', '')] };
   assert.equal(parseRdap(doc).owner, '');
+});
+
+test('picks registry RDAP server by TLD', () => {
+  const services = [[['com', 'net'], ['https://rdap.verisign.com/com/v1/']], [['gov'], ['https://rdap.cloudflareregistry.com/rdap/']]];
+  assert.equal(rdapBase(services, 'oig.sba.gov'), 'https://rdap.cloudflareregistry.com/rdap/');
+  assert.equal(rdapBase(services, 'chase.com'), 'https://rdap.verisign.com/com/v1/');
+  assert.equal(rdapBase(services, 'novo.co'), undefined);
 });
