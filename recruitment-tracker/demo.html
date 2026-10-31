@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recruitment Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Layout: summary band (KPI tiles, then the stage pipeline) over a filterable table; a record opens in a right-hand drawer. */
+  --bg: #f2f3f0;
+  --surface: #ffffff;
+  --ink: #1a2330;
+  --muted: #5b6570;
+  --line: #d9ded8;
+  --accent: #23577f;
+  --accent-soft: #e2ebf3;
+  --on-accent: #ffffff;
+  --row-hover: #f6f8f5;
+  --good: #2c774a; --good-soft: #e0f0e6;
+  --warn: #935d00; --warn-soft: #f7ecd6;
+  --bad: #ad3737; --bad-soft: #f7e2df;
+  --intake: #866a1c; --intake-soft: #f3ebd4;
+  --recruit: #23577f; --recruit-soft: #e2ebf3;
+  --select: #66478a; --select-soft: #ebe4f3;
+  --neutral: #5b6570; --neutral-soft: #eaece8;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #11161c; --surface: #192028; --ink: #e4e9ee; --muted: #98a3ae; --line: #2a333d;
+    --accent: #82b4de; --accent-soft: #1d3245; --on-accent: #0d1822; --row-hover: #1d252e;
+    --good: #6cc08d; --good-soft: #173022; --warn: #e2ac4c; --warn-soft: #382a11; --bad: #ee8b84; --bad-soft: #3b1d1c;
+    --intake: #d8b75f; --intake-soft: #342c15; --recruit: #82b4de; --recruit-soft: #1d3245;
+    --select: #b99de2; --select-soft: #2c2340; --neutral: #98a3ae; --neutral-soft: #252d36;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #11161c; --surface: #192028; --ink: #e4e9ee; --muted: #98a3ae; --line: #2a333d;
+  --accent: #82b4de; --accent-soft: #1d3245; --on-accent: #0d1822; --row-hover: #1d252e;
+  --good: #6cc08d; --good-soft: #173022; --warn: #e2ac4c; --warn-soft: #382a11; --bad: #ee8b84; --bad-soft: #3b1d1c;
+  --intake: #d8b75f; --intake-soft: #342c15; --recruit: #82b4de; --recruit-soft: #1d3245;
+  --select: #b99de2; --select-soft: #2c2340; --neutral: #98a3ae; --neutral-soft: #252d36;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body); -webkit-font-smoothing: antialiased; }
+body.locked { overflow: hidden; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; text-wrap: balance; margin: 0; }
+p { margin: 0; }
+.mono { font-family: var(--font-mono); font-size: .9em; }
+.num { font-variant-numeric: tabular-nums; text-align: right; }
+.sub { color: var(--muted); font-size: 13px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.c-intake  { --c: var(--intake);  --c-soft: var(--intake-soft); }
+.c-recruit { --c: var(--recruit); --c-soft: var(--recruit-soft); }
+.c-select  { --c: var(--select);  --c-soft: var(--select-soft); }
+.c-good    { --c: var(--good);    --c-soft: var(--good-soft); }
+.c-bad     { --c: var(--bad);     --c-soft: var(--bad-soft); }
+.c-neutral { --c: var(--neutral); --c-soft: var(--neutral-soft); }
+
+select, input, textarea { font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; min-height: 36px; }
+textarea { width: 100%; resize: vertical; line-height: 1.45; }
+input:disabled { color: var(--muted); background: var(--neutral-soft); }
+.btn { font: inherit; font-size: 14px; font-weight: 500; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 7px 14px; min-height: 36px; cursor: pointer; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { color: var(--bad); border-color: var(--bad); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--muted); }
+.btn.ghost:hover { color: var(--ink); border-color: var(--line); }
+.btn[disabled] { opacity: .55; cursor: not-allowed; filter: none; }
+.link { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+
+.topbar { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; padding: 14px 24px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.brand { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; }
+.brand h1 { font-size: 23px; letter-spacing: .01em; }
+.demo-badge { font-size: 12px; font-weight: 600; color: var(--warn); background: var(--warn-soft); padding: 2px 9px; border-radius: 999px; }
+.top-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.signin { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.signin select { max-width: 260px; }
+
+main { max-width: 1380px; margin: 0 auto; padding: 20px 24px 32px; display: grid; gap: 20px; }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 7px; align-content: start; }
+.kpi .label { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.kpi .big { font-family: var(--font-display); font-size: 34px; font-weight: 600; line-height: 1.05; font-variant-numeric: tabular-nums; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.kpi .big small { font-size: 17px; font-weight: 500; color: var(--muted); }
+.bar { height: 8px; border-radius: 999px; background: var(--neutral-soft); display: flex; overflow: hidden; }
+.bar > span { display: block; height: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 13px; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.flag { font-family: var(--font-body); font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--c-soft); color: var(--c); }
+
+.pipeline { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.phase { display: grid; gap: 6px; align-content: start; }
+.phase h3 { font-family: var(--font-body); font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.phase .chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.stage { font: inherit; text-align: left; cursor: pointer; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: 8px; padding: 8px 10px; display: grid; gap: 1px; align-content: start; }
+.stage:hover { background: var(--c-soft); }
+.stage b { font-family: var(--font-display); font-size: 22px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stage span { font-size: 12.5px; line-height: 1.25; color: var(--muted); }
+.stage[aria-pressed="true"] { background: var(--c-soft); border-color: var(--c); box-shadow: inset 0 0 0 1px var(--c); }
+
+.list { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+.tab { font: inherit; font-size: 14px; color: var(--muted); background: transparent; border: 0; border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.tab .count { margin-left: 5px; font-variant-numeric: tabular-nums; opacity: .8; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.filters input[type="search"] { width: 290px; max-width: 100%; }
+.list-meta { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 8px 14px; font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--line); }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; min-width: 1040px; border-collapse: collapse; }
+th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; font-size: 14px; }
+th { font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+th.num { text-align: right; }
+.th-sort { font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+th[aria-sort="ascending"] .th-sort::after { content: " \2191"; }
+th[aria-sort="descending"] .th-sort::after { content: " \2193"; }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--row-hover); }
+tbody tr.sel { background: var(--accent-soft); }
+tbody tr.empty { cursor: default; }
+tbody tr.empty td { padding: 28px 12px; text-align: center; color: var(--muted); }
+.pos { font-weight: 500; }
+td.late { color: var(--warn); font-weight: 600; }
+.pill { display: inline-block; font-size: 12.5px; font-weight: 600; white-space: nowrap; padding: 2px 9px; border-radius: 999px; background: var(--c-soft); color: var(--c); }
+.chip { display: inline-block; font-size: 12px; white-space: nowrap; padding: 0 7px; margin: 0 4px 3px 0; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); }
+.chip.perm { color: var(--accent); border-color: var(--accent); }
+.chip.surge { color: var(--select); border-color: var(--select); }
+
+footer { max-width: 1380px; margin: 0 auto; padding: 0 24px 32px; font-size: 13px; color: var(--muted); }
+footer p { max-width: 75ch; }
+
+.scrim { position: fixed; inset: 0; background: rgba(8, 12, 18, .38); z-index: 20; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(660px, 100%); overflow-y: auto; background: var(--surface); border-left: 1px solid var(--line); box-shadow: -10px 0 36px rgba(8, 12, 18, .2); z-index: 21; }
+.d-head { position: sticky; top: 0; z-index: 2; display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; padding: 16px 22px 12px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.d-head h2 { font-size: 23px; outline: none; }
+.d-id { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+.d-title-row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.icon-btn { font: inherit; font-size: 22px; line-height: 1; width: 36px; height: 36px; flex: none; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--muted); cursor: pointer; }
+.icon-btn:hover { color: var(--ink); border-color: var(--muted); }
+.tracker { list-style: none; display: flex; gap: 4px; margin: 0; padding: 14px 22px 2px; }
+.tracker li { flex: 1 1 0; min-width: 0; display: grid; gap: 5px; align-content: start; font-size: 11px; line-height: 1.2; color: var(--muted); overflow-wrap: anywhere; }
+.tracker li::before { content: ""; height: 6px; border-radius: 3px; background: var(--neutral-soft); }
+.tracker li.done::before, .tracker li.now::before { background: var(--accent); }
+.tracker li.now { color: var(--ink); font-weight: 600; }
+.banner { margin: 14px 22px 0; padding: 10px 12px; font-size: 14px; border-radius: 8px; border-left: 4px solid var(--c); background: var(--c-soft); }
+.d-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 22px; }
+.waiting { font-size: 14px; flex-basis: 100%; }
+.panel { flex-basis: 100%; display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.panel label { font-size: 13px; font-weight: 500; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+.err { color: var(--bad); font-size: 13px; }
+.d-sec { padding: 16px 22px; border-top: 1px solid var(--line); display: grid; gap: 12px; }
+.d-sec h3 { font-size: 16px; }
+dl.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 20px; margin: 0; }
+dl.grid > div { min-width: 0; }
+dl.grid .full { grid-column: 1 / -1; }
+dt { font-size: 12px; color: var(--muted); }
+dd { margin: 0; overflow-wrap: anywhere; }
+.history { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.history li { font-size: 14px; padding-left: 10px; border-left: 3px solid var(--line); }
+.history li.ok { border-color: var(--good); }
+.history li.bad { border-color: var(--bad); }
+.funnel { display: grid; gap: 6px; }
+.f-row { display: grid; grid-template-columns: 82px 1fr 48px; gap: 10px; align-items: center; font-size: 13px; }
+.f-bar { height: 10px; border-radius: 3px; background: var(--neutral-soft); overflow: hidden; }
+.f-bar i { display: block; height: 100%; background: var(--accent); }
+.files { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.files li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 14px; }
+.files li .mono { overflow-wrap: anywhere; }
+.notes { white-space: pre-wrap; font-size: 14px; }
+
+.form .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+.field { display: grid; gap: 4px; align-content: start; min-width: 0; }
+.field.full { grid-column: 1 / -1; }
+.field label, fieldset legend { font-size: 13px; font-weight: 500; color: var(--muted); }
+.field input, .field select { width: 100%; }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 6px; }
+fieldset legend { padding: 0; margin-bottom: 4px; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--ink); }
+.check input { width: 17px; height: 17px; min-height: 0; margin: 0; accent-color: var(--accent); }
+.req { color: var(--bad); }
+.hint { font-size: 12px; color: var(--muted); }
+.form-actions { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 22px; background: var(--surface); border-top: 1px solid var(--line); }
+
+.toasts { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); width: min(480px, calc(100% - 32px)); display: grid; gap: 8px; z-index: 40; }
+.toast { padding: 10px 14px; border-radius: 8px; font-size: 14px; background: var(--ink); color: var(--bg); box-shadow: 0 6px 24px rgba(8, 12, 18, .25); animation: rise .18s ease-out; }
+@keyframes rise { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+
+@media (max-width: 1080px) { .pipeline { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) {
+  .topbar { padding: 12px 16px; }
+  main { padding: 16px; }
+  footer { padding: 0 16px 24px; }
+  .pipeline { grid-template-columns: 1fr; }
+  .signin { flex-wrap: wrap; }
+  .d-head, .d-actions, .d-sec, .form-actions { padding-left: 16px; padding-right: 16px; }
+  .tracker { padding-left: 16px; padding-right: 16px; }
+  .tracker li { font-size: 0; }
+  .tracker li.now { font-size: 11px; flex-grow: 3; }
+  .banner { margin-left: 16px; margin-right: 16px; }
+  dl.grid, .form .fields { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <h1>Recruitment Tracker</h1>
+    <span class="demo-badge">Demo · fictional data</span>
+  </div>
+  <div class="top-actions">
+    <label class="signin" for="user">Signed in as <select id="user"></select></label>
+    <button class="btn primary" id="new" type="button">New intent to recruit</button>
+    <button class="btn ghost" id="reset" type="button">Reset demo data</button>
+  </div>
+</header>
+
+<main>
+  <section class="kpis" id="kpis" aria-label="Summary"></section>
+  <section class="pipeline" id="pipeline" aria-label="Actions by stage"></section>
+  <section class="list" aria-label="Recruitment actions">
+    <div class="toolbar">
+      <div class="tabs" id="tabs" role="tablist" aria-label="Views"></div>
+      <div class="filters">
+        <input type="search" id="q" placeholder="Search title, series, #, announcement, person" aria-label="Search actions">
+        <select id="f-office" aria-label="Office"></select>
+        <select id="f-funding" aria-label="Funding"></select>
+        <select id="f-appt" aria-label="Appointment type"></select>
+      </div>
+    </div>
+    <div class="list-meta"><span id="count"></span><span id="stage-filter"></span></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-key="id"><button class="th-sort" data-action="sort" data-key="id" type="button">#</button></th>
+            <th data-key="title"><button class="th-sort" data-action="sort" data-key="title" type="button">Position</button></th>
+            <th>Office · Location</th>
+            <th data-key="status"><button class="th-sort" data-action="sort" data-key="status" type="button">Status</button></th>
+            <th>Funding</th>
+            <th>Appointment</th>
+            <th>HR specialist</th>
+            <th class="num" data-key="applicants"><button class="th-sort" data-action="sort" data-key="applicants" type="button">Applicants</button></th>
+            <th class="num" data-key="age"><button class="th-sort" data-action="sort" data-key="age" type="button" title="Days open, or days until closed">Days</button></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>A browser demo of the Power Apps design: a SharePoint list, a canvas app and a Supervisor → Budget → IG approval flow. Every name, position and number is fictional. Your changes are kept in this browser only. Use “Reset demo data” to start over.</p>
+</footer>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="d-title" hidden></aside>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+
+// ---------- Reference data ----------
+const STAGES = ['Draft', 'Pending Approval', 'Approved', 'Position Prep', 'Announcement Open', 'Certs Issued', 'Interviews', 'Tentative Offer', 'Final Offer / EOD', 'Filled', 'Cancelled', 'Re-recruit'];
+const FLOW = STAGES.slice(0, 10);
+const CLOSED = new Set(['Filled', 'Cancelled', 'Re-recruit']);
+const PHASES = [
+  { name: 'Intake', cls: 'intake', stages: ['Draft', 'Pending Approval', 'Approved'] },
+  { name: 'Recruiting', cls: 'recruit', stages: ['Position Prep', 'Announcement Open', 'Certs Issued'] },
+  { name: 'Selection', cls: 'select', stages: ['Interviews', 'Tentative Offer', 'Final Offer / EOD'] },
+  { name: 'Outcome', cls: 'outcome', stages: ['Filled', 'Cancelled', 'Re-recruit'] },
+];
+const statusCls = s => s === 'Filled' ? 'good' : s === 'Cancelled' ? 'neutral' : s === 'Re-recruit' ? 'bad' : PHASES.find(p => p.stages.includes(s)).cls;
+const HIRING_GOAL = 50;
+const OPM_MODEL_DAYS = 80;
+const APPROVAL_STEPS = ['Supervisor', 'Budget', 'IG'];
+
+const OFFICES = ['Audit', 'Investigations', 'Inspections & Evaluations', 'Counsel', 'Mission Support', 'Front Office'];
+const DIRECTOR = { 'Audit': 'Helen Zhou', 'Investigations': 'Raymond Ortiz', 'Inspections & Evaluations': 'Simone Archer', 'Counsel': 'David Park', 'Mission Support': 'Lena Fischer', 'Front Office': 'Karen Mbeki' };
+const MANAGERS = { 'Audit': ['Tom Brennan', 'Aisha Malik'], 'Investigations': ['Greg Halvorsen', 'Monica Reyes'], 'Inspections & Evaluations': ['Ben Adler', 'Yuki Tanaka'], 'Counsel': ['Rachel Stein'], 'Mission Support': ['Omar Haddad', 'Claire Dubois'], 'Front Office': ['Nate Collins'] };
+const HR = ['Dana Whitfield', 'Marcus Oyelaran', 'Priya Raman', 'Luis Carvalho'];
+const BUDGET = 'Renee Kowalski';
+const IG = 'Jordan Ellis';
+const DIRECTOR_ROLE = o => o === 'Counsel' ? 'Counsel to the IG' : o === 'Front Office' ? 'Deputy IG' : 'AIG, ' + o;
+const PEOPLE = [
+  ...HR.map(name => ({ name, role: 'HR Specialist', group: 'Human Resources' })),
+  { name: BUDGET, role: 'Budget Officer', group: 'Approvers' },
+  { name: IG, role: 'Inspector General', group: 'Approvers' },
+  ...OFFICES.map(o => ({ name: DIRECTOR[o], role: DIRECTOR_ROLE(o), group: 'Approvers' })),
+  ...OFFICES.flatMap(o => MANAGERS[o].map(name => ({ name, role: 'Hiring Manager, ' + o, group: 'Hiring managers' }))),
+];
+const approverFor = (r, step) => [r.supervisor, BUDGET, IG][step];
+const pendingApprover = r => r.status === 'Pending Approval' ? approverFor(r, r.approvalStep) : null;
+const involves = (r, u) => [r.hr, r.hm, r.supervisor, r.createdBy].includes(u) || pendingApprover(r) === u;
+
+// Title, series, grade options, typical applicant range.
+const CATALOG = {
+  'Audit': [
+    ['Auditor', '0511', ['GS-7/9/11', 'GS-9/11/12', 'GS-12', 'GS-13'], [60, 320]],
+    ['Senior Auditor', '0511', ['GS-13', 'GS-14'], [30, 150]],
+    ['Supervisory Auditor', '0511', ['GS-14', 'GS-15'], [15, 60]],
+    ['IT Auditor', '0511', ['GS-12/13', 'GS-13'], [20, 90]],
+    ['Accountant (Forensic)', '0510', ['GS-12/13'], [20, 80]],
+  ],
+  'Investigations': [
+    ['Criminal Investigator (Special Agent)', '1811', ['GS-7/9/11', 'GS-11/12', 'GS-12/13', 'GS-13'], [120, 640]],
+    ['Assistant Special Agent in Charge', '1811', ['GS-14'], [10, 40]],
+    ['Investigative Analyst', '1801', ['GS-11/12', 'GS-12/13'], [40, 200]],
+    ['Digital Forensic Examiner', '2210', ['GS-13'], [15, 60]],
+    ['Hotline Program Specialist', '0301', ['GS-9/11', 'GS-11/12'], [40, 180]],
+  ],
+  'Inspections & Evaluations': [
+    ['Program Analyst (Evaluator)', '0343', ['GS-9/11/12', 'GS-12/13', 'GS-13', 'GS-14'], [50, 260]],
+    ['Inspector', '1801', ['GS-12/13', 'GS-13'], [30, 140]],
+    ['Statistician', '1530', ['GS-12/13'], [10, 50]],
+    ['Data Scientist', '1560', ['GS-13', 'GS-14'], [20, 120]],
+  ],
+  'Counsel': [
+    ['Attorney-Advisor', '0905', ['GS-13/14', 'GS-14', 'GS-15'], [40, 220]],
+    ['Paralegal Specialist', '0950', ['GS-9/11'], [30, 120]],
+  ],
+  'Mission Support': [
+    ['IT Specialist (INFOSEC)', '2210', ['GS-12/13', 'GS-13', 'GS-14'], [30, 160]],
+    ['IT Specialist (SYSADMIN)', '2210', ['GS-11/12', 'GS-12/13'], [30, 150]],
+    ['Human Resources Specialist', '0201', ['GS-11/12', 'GS-12/13'], [40, 200]],
+    ['Budget Analyst', '0560', ['GS-11/12', 'GS-12/13'], [30, 150]],
+    ['Contract Specialist', '1102', ['GS-11/12', 'GS-12/13'], [20, 100]],
+    ['Management and Program Analyst', '0343', ['GS-12/13', 'GS-13'], [50, 250]],
+  ],
+  'Front Office': [
+    ['Public Affairs Specialist', '1035', ['GS-12/13', 'GS-13'], [40, 200]],
+    ['Writer-Editor', '1082', ['GS-11/12', 'GS-12/13'], [40, 160]],
+    ['Staff Assistant', '0301', ['GS-9/11'], [60, 250]],
+    ['Congressional Liaison Specialist', '0301', ['GS-13', 'GS-14'], [20, 100]],
+  ],
+};
+const OFFICE_WEIGHTS = [30, 25, 18, 6, 15, 6];
+const LOCATIONS = ['Washington, DC', 'Washington, DC', 'Washington, DC', 'Atlanta, GA', 'Chicago, IL', 'Dallas, TX', 'Denver, CO', 'Philadelphia, PA', 'San Francisco, CA', 'Kansas City, MO', 'Seattle, WA', 'Remote'];
+const REC_TYPES = ['Internal (Merit Promotion)', 'External (Delegated Examining)', 'Both (MP & DE)', 'Direct Hire', 'Other'];
+const REC_SUFFIX = { 'Internal (Merit Promotion)': 'MP', 'External (Delegated Examining)': 'DE', 'Both (MP & DE)': 'MPDE', 'Direct Hire': 'DH', 'Other': 'OT' };
+const WORK = {
+  'Audit': ['the FY27 audit plan, including grant oversight', 'financial statement audit oversight', 'IT and cybersecurity audit coverage', 'oversight of surge-funded programs'],
+  'Investigations': ['the procurement and grant fraud caseload', 'the regional field office caseload', 'digital evidence processing', 'hotline complaint intake and triage'],
+  'Inspections & Evaluations': ['evaluations on the FY27 oversight plan', 'data analytics for risk-based inspections', 'inspection coverage of field sites'],
+  'Counsel': ['legal review of reports and subpoenas', 'the FOIA and ethics workload'],
+  'Mission Support': ['IT infrastructure and security operations', 'HR operations during the hiring surge', 'budget execution for annual and surge funds', 'acquisition support for oversight contracts'],
+  'Front Office': ['congressional and media engagement', 'report production and editing', 'front office operations'],
+};
+const FIRST = ['Alex', 'Brianna', 'Carlos', 'Denise', 'Evan', 'Fatima', 'Gordon', 'Hannah', 'Isaac', 'Jasmine', 'Kevin', 'Lorraine', 'Miguel', 'Natalie', 'Oscar', 'Patricia', 'Quentin', 'Rosa', 'Samuel', 'Teresa', 'Victor', 'Wendy', 'Xavier', 'Yolanda', 'Grace', 'Henry', 'Irene', 'Julian'];
+const LAST = ['Abbott', 'Bishop', 'Castillo', 'Donnelly', 'Esposito', 'Franklin', 'Gutierrez', 'Hughes', 'Ibrahim', 'Jensen', 'Kowal', 'Lindqvist', 'Moreno', 'Nakamura', 'Okafor', 'Pruitt', 'Quinlan', 'Rasmussen', 'Sato', 'Thibodeaux', 'Underwood', 'Vasquez', 'Whitaker', 'Zelinski'];
+const SUP_COMMENTS = ['Concur.', 'Critical to the FY27 work plan.', 'Approved. Please prioritize.', ''];
+const IG_COMMENTS = ['Approved.', 'Approved. Proceed with recruitment.', ''];
+const CANCEL_NOTES = ['Position abolished in the FY27 reorganization.', 'Surge funding not extended past this fiscal year.', 'Filled by reassignment of a current employee.', 'Hiring pause; resubmit when lifted.'];
+const OPEN_NOTES = {
+  'Draft': ['Waiting on the PD from the hiring manager.'],
+  'Approved': ['HR kickoff meeting scheduled with the hiring manager.'],
+  'Position Prep': ['PD under classification review.', 'Waiting on SME input for the job analysis.'],
+  'Announcement Open': ['Announcement shared with veterans groups and university career centers.'],
+  'Certs Issued': ['Selecting official reviewing certificates.'],
+  'Interviews': ['Panel interviews scheduled.', 'Second-round interviews this week.'],
+  'Tentative Offer': ['Selectee accepted the TJO; pre-employment checks started.'],
+  'Final Offer / EOD': ['Final offer accepted; IT account request submitted.'],
+};
+
+// ---------- Dates ----------
+const pad = n => String(n).padStart(2, '0');
+const toISO = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const fromISO = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const TODAY = toISO(new Date());
+const addDays = (s, n) => { const d = fromISO(s); d.setDate(d.getDate() + n); return toISO(d); };
+const diffDays = (a, b) => Math.round((fromISO(b) - fromISO(a)) / 864e5);
+const fmtDate = s => s ? fromISO(s).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+// Federal pay periods start on Sunday, so EOD dates snap forward to one.
+const payPeriodStart = s => { const d = fromISO(s); d.setDate(d.getDate() + (7 - d.getDay()) % 7); return toISO(d); };
+const fiscalYear = s => { const d = fromISO(s); return d.getMonth() >= 9 ? d.getFullYear() + 1 : d.getFullYear(); };
+const annNumber = r => `OIG-${String(fiscalYear(r.annOpen || TODAY)).slice(2)}-${String(300 + r.id).padStart(4, '0')}-${REC_SUFFIX[r.recType] || 'OT'}`;
+
+// ---------- Demo data (seeded, so every reset gives the same 100 actions) ----------
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+function generate(seed = 2026) {
+  const rnd = mulberry32(seed);
+  const int = (a, b) => a + Math.floor(rnd() * (b - a + 1));
+  const pick = a => a[Math.floor(rnd() * a.length)];
+  const chance = p => rnd() < p;
+  const wpick = (a, w) => { let x = rnd() * w.reduce((s, v) => s + v, 0); for (let i = 0; i < a.length; i++) if ((x -= w[i]) < 0) return a[i]; return a[a.length - 1]; };
+
+  const COUNTS = { 'Draft': 6, 'Pending Approval': 8, 'Approved': 6, 'Position Prep': 9, 'Announcement Open': 12, 'Certs Issued': 9, 'Interviews': 10, 'Tentative Offer': 7, 'Final Offer / EOD': 6, 'Filled': 18, 'Cancelled': 4, 'Re-recruit': 5 };
+  const SINCE = { 'Draft': [0, 25], 'Pending Approval': [0, 12], 'Approved': [0, 10], 'Position Prep': [5, 40], 'Announcement Open': [0, 9], 'Certs Issued': [0, 12], 'Interviews': [5, 30], 'Tentative Offer': [0, 20], 'Final Offer / EOD': [0, 12], 'Filled': [7, 170] };
+  const ANCHOR = { 'Draft': null, 'Pending Approval': 'submitted', 'Approved': 'approved', 'Position Prep': 'approved', 'Announcement Open': 'open', 'Certs Issued': 'certs', 'Interviews': 'certs', 'Tentative Offer': 'to', 'Final Offer / EOD': 'fo', 'Filled': 'eodRaw' };
+
+  const statuses = Object.entries(COUNTS).flatMap(([s, n]) => Array(n).fill(s));
+  for (let i = statuses.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [statuses[i], statuses[j]] = [statuses[j], statuses[i]]; }
+
+  // Days after creation at which each milestone happened, up to the furthest stage reached.
+  const timeline = ri => {
+    const off = {};
+    if (ri >= 1) off.submitted = int(0, 4);
+    if (ri >= 2) off.approved = off.submitted + int(3, 15);
+    if (ri >= 4) { off.open = off.approved + int(7, 25); off.close = off.open + int(10, 14); }
+    if (ri >= 5) off.certs = off.close + int(7, 21);
+    if (ri >= 7) off.to = off.certs + int(10, 28);
+    if (ri >= 8) { off.fo = off.to + int(14, 40); off.eodRaw = off.fo + int(14, 28); }
+    return off;
+  };
+
+  const recs = statuses.map((status, k) => {
+    const office = wpick(OFFICES, OFFICE_WEIGHTS);
+    const [title, series, grades, appRange] = pick(CATALOG[office]);
+    let reached = status, since;
+    if (status === 'Cancelled') { reached = pick(['Approved', 'Position Prep', 'Announcement Open', 'Certs Issued']); since = int(5, 60); }
+    else if (status === 'Re-recruit') { reached = pick(['Certs Issued', 'Interviews', 'Tentative Offer', 'Final Offer / EOD']); since = int(2, 60); }
+    else since = int(...SINCE[status]);
+    const ri = STAGES.indexOf(reached);
+    const off = timeline(ri);
+    const createdAgo = (ANCHOR[reached] ? off[ANCHOR[reached]] : 0) + since;
+    const ago = { created: createdAgo, modified: status === 'Filled' ? since - 7 : int(0, since) };
+    for (const [m, v] of Object.entries(off)) ago[m] = createdAgo - v;
+    if (status === 'Re-recruit') delete ago.eodRaw;
+
+    const fund = wpick(['P', 'S', 'B'], [55, 30, 15]);
+    const fundPerm = fund !== 'S', fundSurge = fund !== 'P';
+    const appt = fundSurge ? (chance(fund === 'S' ? .75 : .35) ? 'Term' : 'Permanent') : (chance(.08) ? 'Term' : 'Permanent');
+    if (appt === 'Term') ago.nte = createdAgo - int(395, 1460);
+    const backfill = chance(.45);
+    const departing = backfill ? `${pick(FIRST)} ${pick(LAST)}` : '';
+    if (backfill) ago.departure = createdAgo + int(-45, 60);
+    const recType = wpick(REC_TYPES, ['2210', '1560'].includes(series) ? [10, 25, 25, 38, 2] : [22, 36, 34, 4, 4]);
+    const vacancies = ['Auditor', 'Criminal Investigator (Special Agent)', 'Program Analyst (Evaluator)'].includes(title) ? wpick([1, 2, 3, 4], [60, 25, 10, 5]) : wpick([1, 2], [90, 10]);
+    const hm = pick(MANAGERS[office]), supervisor = DIRECTOR[office];
+    const work = pick(WORK[office]);
+    const justification = (backfill
+      ? `Backfill following the departure of ${departing} (${pick(['retirement', 'transfer to another agency', 'resignation', 'promotion elsewhere'])}). Needed to sustain ${work}.`
+      : `New position to expand ${work}.`) + (fundSurge ? ' Funded from the surge oversight appropriation.' : '');
+
+    const budgetComment = fund === 'P' ? 'Funds certified against the annual account.' : fund === 'S' ? 'Funds certified against the surge allocation.' : 'Split funding certified (annual account and surge).';
+    const hist = [];
+    let approvalStep = 0;
+    if (ri >= 2) {
+      const s = ago.submitted, span = s - ago.approved, f1 = .15 + rnd() * .35, f2 = f1 + rnd() * (.85 - f1);
+      hist.push({ ago: s, who: hm, action: 'Submitted for approval' });
+      hist.push({ ago: s - Math.round(span * f1), who: supervisor, step: 'Supervisor', action: 'Approved', comment: pick(SUP_COMMENTS) });
+      hist.push({ ago: s - Math.round(span * f2), who: BUDGET, step: 'Budget', action: 'Approved', comment: budgetComment });
+      hist.push({ ago: ago.approved, who: IG, step: 'IG', action: 'Approved', comment: pick(IG_COMMENTS) });
+    } else if (status === 'Pending Approval') {
+      approvalStep = int(0, 2);
+      let t = ago.submitted;
+      hist.push({ ago: t, who: hm, action: 'Submitted for approval' });
+      for (let i = 0; i < approvalStep; i++) {
+        t = Math.max(0, t - int(1, 4));
+        hist.push({ ago: t, who: [supervisor, BUDGET][i], step: APPROVAL_STEPS[i], action: 'Approved', comment: i ? budgetComment : pick(SUP_COMMENTS) });
+      }
+    }
+
+    let applicants = null, qualified = null, referred = null;
+    if (ri >= 5) { applicants = int(...appRange); qualified = Math.round(applicants * (.25 + rnd() * .4)); referred = Math.min(qualified, int(3, 25)); }
+    else if (ri === 4) applicants = Math.round(int(...appRange) * Math.min(1, (since + 1) / 13));
+
+    let notes = '';
+    if (status === 'Cancelled') notes = pick(CANCEL_NOTES);
+    else if (status === 'Re-recruit') {
+      notes = reached === 'Final Offer / EOD' ? pick(['Selectee did not clear suitability; certificate exhausted.', 'Selectee accepted an offer at another agency before EOD.'])
+        : reached === 'Tentative Offer' ? 'Selectee declined the tentative offer; no other eligible candidates on the certificate.'
+        : pick(['No candidates referred on the certificate.', 'Certificate expired before a selection was made.']);
+      if (notes.startsWith('No candidates')) referred = 0;
+    } else if (OPEN_NOTES[status] && chance(.25)) notes = pick(OPEN_NOTES[status]);
+
+    return {
+      _k: k, _reached: ri, ago, hist,
+      title, series, grade: pick(grades), office,
+      location: ['Front Office', 'Counsel'].includes(office) ? 'Washington, DC' : pick(LOCATIONS),
+      vacancies, recType, appt, fundPerm, fundSurge, reason: backfill ? 'Backfill (Attrition)' : 'New Position', departing, justification,
+      createdBy: hm, supervisor, status, approvalStep,
+      hr: ri >= 2 ? pick(HR) : chance(.3) ? pick(HR) : '', hm,
+      applicants, qualified, referred, filled: status === 'Filled' ? vacancies : 0, notes, originalId: null,
+    };
+  });
+
+  // Two drafts that were returned during approval.
+  recs.filter(r => r.status === 'Draft').slice(0, 2).forEach((r, i) => {
+    const c = int(18, 40), s = c - int(1, 3), sup = s - int(1, 3);
+    r.ago.created = c; r.ago.submitted = s; r.ago.modified = Math.max(0, sup - int(1, 4));
+    r.hist = [{ ago: s, who: r.hm, action: 'Submitted for approval' }];
+    if (i === 0) {
+      r.hist.push({ ago: sup, who: r.supervisor, step: 'Supervisor', action: 'Approved', comment: 'Concur.' });
+      r.hist.push({ ago: r.ago.modified, who: BUDGET, step: 'Budget', action: 'Returned', comment: 'Surge allocation for this office is fully committed this quarter. Resubmit with permanent funds or as a term appointment.' });
+    } else {
+      r.hist.push({ ago: r.ago.modified, who: r.supervisor, step: 'Supervisor', action: 'Returned', comment: 'Confirm the grade range against the draft PD before resubmitting.' });
+    }
+  });
+
+  // Three re-recruits already have their follow-on action, which carries the original approval.
+  const parents = recs.filter(r => r.status === 'Re-recruit').slice(0, 3);
+  const kids = recs.filter(r => ['Approved', 'Position Prep', 'Announcement Open', 'Certs Issued'].includes(r.status)).slice(0, 3);
+  parents.forEach((o, i) => {
+    const c = kids[i];
+    if (o.vacancies > 1 && chance(.5)) o.filled = int(1, o.vacancies - 1);
+    c.ago.created = c.ago.approved;
+    const mod = c.ago.created + int(1, 3);
+    o.ago.modified = mod;
+    const last = Math.min(...['submitted', 'approved', 'open', 'close', 'certs', 'to', 'fo'].filter(m => o.ago[m] != null).map(m => o.ago[m]));
+    if (last <= mod) {
+      const delta = mod - last + int(3, 12);
+      for (const m in o.ago) if (m !== 'modified') o.ago[m] += delta;
+      o.hist.forEach(h => { h.ago += delta; });
+    }
+    for (const f of ['title', 'series', 'grade', 'office', 'location', 'recType', 'appt', 'fundPerm', 'fundSurge', 'reason', 'departing', 'justification', 'supervisor', 'hm']) c[f] = o[f];
+    c.hr = o.hr || pick(HR);
+    c.createdBy = c.hr;
+    c.vacancies = Math.max(1, o.vacancies - o.filled);
+    c.ago.submitted = o.ago.submitted; c.ago.approved = o.ago.approved;
+    if (o.ago.nte != null) c.ago.nte = o.ago.nte; else delete c.ago.nte;
+    if (o.ago.departure != null) c.ago.departure = o.ago.departure; else delete c.ago.departure;
+    c.hist = o.hist.map(h => ({ ...h }));
+    c._parent = o;
+  });
+
+  // SharePoint IDs follow creation order.
+  recs.sort((a, b) => b.ago.created - a.ago.created || a._k - b._k);
+  recs.forEach((r, i) => { r.id = i + 1; });
+  for (const r of recs) {
+    const d = m => r.ago[m] == null ? null : addDays(TODAY, -r.ago[m]);
+    Object.assign(r, {
+      created: d('created'), modified: d('modified'), submitted: d('submitted'), approved: d('approved'),
+      annOpen: d('open'), annClose: d('close'), certs: d('certs'), to: d('to'), fo: d('fo'),
+      eod: r.ago.eodRaw == null ? null : payPeriodStart(d('eodRaw')),
+      termNTE: d('nte'), departureDate: d('departure'),
+    });
+    r.history = r.hist.map(h => ({ date: addDays(TODAY, -h.ago), who: h.who, step: h.step || '', action: h.action, comment: h.comment || '' })).sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+    r.annNo = r.annOpen ? annNumber(r) : '';
+    if (r._parent) {
+      r.originalId = r._parent.id;
+      r.history.push({ date: r.created, who: r.createdBy, step: '', action: `Re-recruit of #${r._parent.id}`, comment: 'Original approval carried over.' });
+    }
+    const by = r.hr || r.createdBy, files = [];
+    const add = (name, date) => files.push({ name, size: int(80, 900) * 1024, date: date || r.created, by });
+    const ri = r._parent ? STAGES.indexOf(r.status) : r._reached;
+    if (ri === 0 && chance(.4)) add(`Draft_PD_${r.series}.docx`, r.created);
+    if (ri >= 1) add(`Intent_to_Recruit_${r.id}.pdf`, r.submitted || r.created);
+    if (ri >= 3) { add(`PD_${r.series}_${r.grade.replace(/\//g, '-')}.pdf`, r.approved); add(`Job_Analysis_${r.series}.docx`, r.approved); }
+    if (ri >= 4 && r.annNo) add(`Announcement_${r.annNo}.pdf`, r.annOpen);
+    if (ri >= 5 && r.annNo) add(`Certificate_Summary_${r.annNo}.pdf`, r.certs);
+    r.attachments = files;
+    delete r.ago; delete r.hist; delete r._parent; delete r._k; delete r._reached;
+  }
+  return recs;
+}
+
+// ---------- State ----------
+const KEY = 'recruitment-tracker-demo-v1';
+const store = {
+  load() { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } },
+  save(v) { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch { /* demo still works without storage */ } },
+  clear() { try { localStorage.removeItem(KEY); } catch { /* ignore */ } },
+};
+const saved = store.load();
+const state = {
+  records: Array.isArray(saved?.records) ? saved.records : generate(),
+  user: PEOPLE.some(p => p.name === saved?.user) ? saved.user : HR[0],
+  view: 'open', stage: null, q: '', office: '', funding: '', appt: '',
+  sort: { key: 'id', dir: -1 },
+  selected: null, draft: null, editing: false, ask: null,
+};
+const persist = () => store.save({ records: state.records, user: state.user });
+
+// ---------- Helpers ----------
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pill = s => `<span class="pill c-${statusCls(s)}">${esc(s)}</span>`;
+const fundChips = r => (r.fundPerm ? '<span class="chip perm">Permanent</span>' : '') + (r.fundSurge ? '<span class="chip surge">Surge</span>' : '');
+const fmtSize = b => b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+const nextId = () => Math.max(0, ...state.records.map(r => r.id)) + 1;
+const current = () => state.draft && state.draft.id === state.selected ? state.draft : state.records.find(r => r.id === state.selected);
+const lastLine = s => String(s || '').trim().split('\n').pop();
+function ageDays(r) {
+  if (r.status === 'Filled' && r.eod) return diffDays(r.created, r.eod);
+  if (CLOSED.has(r.status)) return diffDays(r.created, r.modified || TODAY);
+  return diffDays(r.created, TODAY);
+}
+function toast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  $('#toasts').append(el);
+  setTimeout(() => el.remove(), 4200);
+}
+
+// ---------- Summary ----------
+function renderKpis() {
+  const R = state.records, open = R.filter(r => !CLOSED.has(r.status));
+  const pending = R.filter(r => r.status === 'Pending Approval').length;
+  const mine = R.filter(r => pendingApprover(r) === state.user).length;
+  const filled = R.filter(r => r.status === 'Filled');
+  const hired = filled.reduce((s, r) => s + (r.filled || 0), 0);
+  const scheduled = R.filter(r => r.status === 'Final Offer / EOD').reduce((s, r) => s + (r.vacancies || 1), 0);
+  const tth = filled.filter(r => r.submitted && r.eod).map(r => diffDays(r.submitted, r.eod));
+  const avg = tth.length ? Math.round(tth.reduce((a, b) => a + b, 0) / tth.length) : null;
+  const perm = open.filter(r => r.fundPerm && !r.fundSurge).length;
+  const surge = open.filter(r => r.fundSurge && !r.fundPerm).length;
+  const split = open.filter(r => r.fundPerm && r.fundSurge).length;
+  const term = open.filter(r => r.appt === 'Term').length;
+  const backfill = open.filter(r => r.reason === 'Backfill (Attrition)').length;
+  const w = n => (100 * n / Math.max(1, open.length)).toFixed(2) + '%';
+  const g = n => Math.min(100, 100 * n / HIRING_GOAL).toFixed(2) + '%';
+  $('#kpis').innerHTML = `
+    <div class="kpi">
+      <div class="label">Open actions</div>
+      <div class="big">${open.length}</div>
+      <div class="sub">${pending} awaiting approval${mine ? ` · <button class="link" type="button" data-action="view" data-view="mine">${mine} need${mine === 1 ? 's' : ''} your decision</button>` : ''}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Hires toward goal</div>
+      <div class="big">${hired} <small>of ${HIRING_GOAL}</small></div>
+      <div class="bar" role="img" aria-label="${hired} hired and ${scheduled} with an EOD date set, against a goal of ${HIRING_GOAL}">
+        <span style="width:${g(hired)};background:var(--good)"></span><span style="width:${g(Math.min(scheduled, HIRING_GOAL - hired))};background:var(--good);opacity:.35"></span>
+      </div>
+      <div class="sub">${scheduled} more with an EOD date set</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Time to hire</div>
+      <div class="big">${avg ?? '–'} <small>days</small>${avg != null ? `<span class="flag c-${avg > OPM_MODEL_DAYS ? 'bad' : 'good'}">${avg > OPM_MODEL_DAYS ? 'Over' : 'Within'} OPM's ${OPM_MODEL_DAYS}-day model</span>` : ''}</div>
+      <div class="sub">Average from intent submitted to EOD, across ${tth.length} filled actions</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Open actions by funding</div>
+      <div class="bar" role="img" aria-label="${perm} permanent, ${surge} surge, ${split} split funded">
+        <span style="width:${w(perm)};background:var(--accent)"></span><span style="width:${w(surge)};background:var(--select)"></span><span style="width:${w(split)};background:var(--intake)"></span>
+      </div>
+      <div class="legend"><span><i style="background:var(--accent)"></i>Permanent ${perm}</span><span><i style="background:var(--select)"></i>Surge ${surge}</span><span><i style="background:var(--intake)"></i>Split ${split}</span></div>
+      <div class="sub">${term} term · ${open.length - term} permanent · ${backfill} backfills from attrition</div>
+    </div>`;
+}
+
+function renderPipeline() {
+  const counts = Object.fromEntries(STAGES.map(s => [s, 0]));
+  state.records.forEach(r => { if (r.status in counts) counts[r.status]++; });
+  $('#pipeline').innerHTML = PHASES.map(p => `
+    <div class="phase">
+      <h3>${p.name}</h3>
+      <div class="chips">${p.stages.map(s => `<button class="stage c-${statusCls(s)}" type="button" data-action="stage" data-stage="${esc(s)}" aria-pressed="${state.stage === s}"><b>${counts[s]}</b><span>${esc(s)}</span></button>`).join('')}</div>
+    </div>`).join('');
+}
+
+// ---------- List ----------
+const VIEWS = [['open', 'Open'], ['mine', 'Mine'], ['pending', 'Pending approval'], ['closed', 'Closed'], ['all', 'All']];
+function inView(r, v) {
+  switch (v) {
+    case 'open': return !CLOSED.has(r.status);
+    case 'mine': return involves(r, state.user);
+    case 'pending': return r.status === 'Pending Approval';
+    case 'closed': return CLOSED.has(r.status);
+    default: return true;
+  }
+}
+function visible(r) {
+  if (state.stage ? r.status !== state.stage : !inView(r, state.view)) return false;
+  if (state.office && r.office !== state.office) return false;
+  if (state.funding === 'perm' && !r.fundPerm) return false;
+  if (state.funding === 'surge' && !r.fundSurge) return false;
+  if (state.funding === 'split' && !(r.fundPerm && r.fundSurge)) return false;
+  if (state.appt && r.appt !== state.appt) return false;
+  if (state.q) {
+    const hay = [r.id, r.title, r.series, r.grade, r.office, r.location, r.annNo, r.hr, r.hm, r.supervisor, r.departing, r.status].join(' ').toLowerCase();
+    if (!hay.includes(state.q)) return false;
+  }
+  return true;
+}
+const SORTERS = { id: r => r.id, title: r => r.title.toLowerCase(), status: r => STAGES.indexOf(r.status), applicants: r => r.applicants ?? -1, age: ageDays };
+const cmp = (a, b) => { const f = SORTERS[state.sort.key], x = f(a), y = f(b); return ((x < y ? -1 : x > y ? 1 : 0) * state.sort.dir) || b.id - a.id; };
+
+function renderTabs() {
+  $('#tabs').innerHTML = VIEWS.map(([v, label]) => {
+    const n = state.records.filter(r => inView(r, v)).length;
+    const sel = !state.stage && state.view === v;
+    return `<button class="tab" type="button" role="tab" aria-selected="${sel}" data-action="view" data-view="${v}">${label}<span class="count">${n}</span></button>`;
+  }).join('');
+}
+
+function rowHTML(r) {
+  const age = ageDays(r), open = !CLOSED.has(r.status);
+  return `<tr tabindex="0" data-id="${r.id}"${r.id === state.selected ? ' class="sel"' : ''}>
+    <td class="num mono">${r.id}</td>
+    <td><div class="pos">${esc(r.title)}</div><div class="sub mono">${esc(r.series)} · ${esc(r.grade)}${r.vacancies > 1 ? ` · ${r.vacancies} vacancies` : ''}</div></td>
+    <td><div>${esc(r.office)}</div><div class="sub">${esc(r.location)}</div></td>
+    <td>${pill(r.status)}${r.status === 'Pending Approval' ? `<div class="sub">Waiting on ${APPROVAL_STEPS[r.approvalStep]}</div>` : ''}${r.originalId ? `<div class="sub">Re-recruit of #${r.originalId}</div>` : ''}</td>
+    <td>${fundChips(r) || '<span class="sub">None</span>'}</td>
+    <td>${r.appt === 'Term' ? `<span class="chip">Term</span>${r.termNTE ? `<div class="sub">NTE ${fmtDate(r.termNTE)}</div>` : ''}` : esc(r.appt)}</td>
+    <td>${r.hr ? esc(r.hr) : '<span class="sub">Unassigned</span>'}</td>
+    <td class="num">${r.applicants ?? '<span class="sub">–</span>'}</td>
+    <td class="num${open && age > 120 ? ' late' : ''}"${open && age > 120 ? ' title="Open more than 120 days"' : ''}>${age}</td>
+  </tr>`;
+}
+
+function renderTable() {
+  const rows = state.records.filter(visible).sort(cmp);
+  $('#tbody').innerHTML = rows.length ? rows.map(rowHTML).join('')
+    : `<tr class="empty"><td colspan="9">No actions match these filters. <button class="link" type="button" data-action="clear">Clear filters</button></td></tr>`;
+  $('#count').textContent = `Showing ${rows.length} of ${state.records.length} actions`;
+  $('#stage-filter').innerHTML = state.stage ? `Stage: <strong>${esc(state.stage)}</strong> · <button class="link" type="button" data-action="clear-stage">Show all stages</button>` : '';
+  document.querySelectorAll('th[data-key]').forEach(th => th.setAttribute('aria-sort', th.dataset.key === state.sort.key ? (state.sort.dir > 0 ? 'ascending' : 'descending') : 'none'));
+}
+
+function renderAll() {
+  renderKpis(); renderPipeline(); renderTabs(); renderTable();
+  if (state.selected != null) renderDrawer();
+}
+
+// ---------- Drawer: view ----------
+function trackerHTML(r) {
+  if (r.status === 'Cancelled' || r.status === 'Re-recruit') {
+    return `<div class="banner c-${statusCls(r.status)}"><strong>${esc(r.status)}</strong>${r.notes ? `: ${esc(lastLine(r.notes))}` : ''}</div>`;
+  }
+  const i = FLOW.indexOf(r.status);
+  return `<ol class="tracker" aria-label="Lifecycle stage">${FLOW.map((s, k) => `<li class="${k < i || r.status === 'Filled' ? 'done' : k === i ? 'now' : ''}"${k === i ? ' aria-current="step"' : ''}>${esc(s)}</li>`).join('')}</ol>`;
+}
+
+function actionsHTML(r, child) {
+  if (state.editing) return '';
+  const s = r.status, idx = STAGES.indexOf(s), out = [];
+  if (state.ask) {
+    const cancel = state.ask === 'cancel';
+    return `<div class="panel"><label for="ask-reason">${cancel ? 'Why is this action being cancelled?' : 'Why does this need a re-recruit?'}</label>
+      <textarea id="ask-reason" rows="2"></textarea><p class="err" id="ask-err" hidden>Add a reason first.</p>
+      <div class="row"><button class="btn ${cancel ? 'danger' : 'primary'}" type="button" data-action="confirm-ask">${cancel ? 'Cancel this action' : 'Mark re-recruit'}</button><button class="btn ghost" type="button" data-action="ask-back">Back</button></div></div>`;
+  }
+  if (s === 'Draft') {
+    const ok = r.fundPerm || r.fundSurge;
+    out.push(`<button class="btn primary" type="button" data-action="submit"${ok ? '' : ' disabled'}>${ok ? 'Submit for approval' : 'Check a funding source first'}</button>`);
+  }
+  if (s === 'Pending Approval') {
+    const who = pendingApprover(r), step = APPROVAL_STEPS[r.approvalStep];
+    if (who === state.user) {
+      out.push(`<div class="panel"><label for="ap-comment">Your decision as ${step} approver</label>
+        <textarea id="ap-comment" rows="2" placeholder="Comment (needed if you return it)"></textarea><p class="err" id="ap-err" hidden>Add a comment so the requester knows what to fix.</p>
+        <div class="row"><button class="btn primary" type="button" data-action="approve">Approve</button><button class="btn danger" type="button" data-action="return">Return to requester</button></div></div>`);
+    } else {
+      out.push(`<p class="waiting">Waiting on the <strong>${step}</strong> approver: ${esc(who)}.</p>`);
+      out.push(`<button class="btn" type="button" data-action="act-as" data-who="${esc(who)}">Sign in as ${esc(who)} to decide</button>`);
+    }
+  }
+  if (idx >= 2 && idx <= 7) out.push(`<button class="btn primary" type="button" data-action="advance">Move to ${esc(STAGES[idx + 1])}</button>`);
+  if (s === 'Final Offer / EOD') out.push(`<button class="btn primary" type="button" data-action="fill">Mark filled</button>`);
+  if (idx >= 5 && idx <= 8) out.push(`<button class="btn" type="button" data-action="ask" data-kind="rerecruit">Mark re-recruit</button>`);
+  if (s === 'Re-recruit') out.push(child ? `<button class="btn" type="button" data-action="open" data-id="${child.id}">Open re-recruit #${child.id}</button>` : `<button class="btn primary" type="button" data-action="create-rr">Create re-recruit</button>`);
+  out.push(`<button class="btn" type="button" data-action="edit">Edit</button>`);
+  if (!CLOSED.has(s) && s !== 'Pending Approval') out.push(`<button class="btn ghost" type="button" data-action="ask" data-kind="cancel">Cancel action</button>`);
+  return out.join('');
+}
+
+function funnelHTML(r) {
+  if (r.applicants == null) return '<p class="sub">No applicant counts yet. HR records them from the staffing system once the announcement closes.</p>';
+  const max = Math.max(1, r.applicants);
+  const row = (label, n) => n == null ? '' : `<div class="f-row"><span>${label}</span><div class="f-bar"><i style="width:${(100 * n / max).toFixed(1)}%"></i></div><b class="num">${n}</b></div>`;
+  return `<div class="funnel">${row(r.status === 'Announcement Open' ? 'So far' : 'Applicants', r.applicants)}${row('Qualified', r.qualified)}${row('Referred', r.referred)}</div>`;
+}
+
+function viewHTML(r, child) {
+  const item = (label, html, full) => `<div${full ? ' class="full"' : ''}><dt>${label}</dt><dd>${html === '' || html == null ? '<span class="sub">–</span>' : html}</dd></div>`;
+  const step = APPROVAL_STEPS[r.approvalStep];
+  return `
+  <section class="d-sec">
+    <h3>Intent to recruit</h3>
+    <dl class="grid">
+      ${item('Recruitment type', esc(r.recType))}
+      ${item('Vacancies', String(r.vacancies || 1))}
+      ${item('Appointment', esc(r.appt) + (r.appt === 'Term' && r.termNTE ? ` · NTE ${fmtDate(r.termNTE)}` : ''))}
+      ${item('Funding', fundChips(r) || '<span class="err">No funding source checked</span>')}
+      ${item('Reason', esc(r.reason))}
+      ${r.reason === 'Backfill (Attrition)' ? item('Departing employee', esc(r.departing) + (r.departureDate ? ` · ${r.departureDate > TODAY ? 'leaving' : 'left'} ${fmtDate(r.departureDate)}` : '')) : ''}
+      ${item('Requested by', `${esc(r.createdBy)} · ${fmtDate(r.created)}`)}
+      ${item('Supervisor (first approver)', esc(r.supervisor))}
+      ${item('Justification', esc(r.justification), true)}
+    </dl>
+  </section>
+  <section class="d-sec">
+    <h3>Approval</h3>
+    <dl class="grid">
+      ${item('Date submitted', fmtDate(r.submitted))}
+      ${item('Date approved', fmtDate(r.approved))}
+      ${r.status === 'Pending Approval' ? item('Waiting on', `${step}: ${esc(pendingApprover(r))}`, true) : ''}
+    </dl>
+    ${r.history.length ? `<ol class="history">${r.history.map(h => `<li class="${h.action === 'Approved' ? 'ok' : h.action === 'Returned' ? 'bad' : ''}"><span class="mono">${fmtDate(h.date)}</span> · ${h.step ? `<strong>${esc(h.step)}</strong> ` : ''}${esc(h.action)} by ${esc(h.who)}${h.comment ? `: “${esc(h.comment)}”` : ''}</li>`).join('')}</ol>` : '<p class="sub">Not submitted yet.</p>'}
+  </section>
+  <section class="d-sec">
+    <h3>Assignment</h3>
+    <dl class="grid">
+      ${item('HR specialist', r.hr ? esc(r.hr) : '<span class="sub">Unassigned</span>')}
+      ${item('Hiring manager', esc(r.hm))}
+    </dl>
+  </section>
+  <section class="d-sec">
+    <h3>Announcement and selection</h3>
+    <dl class="grid">
+      ${item('Announcement number', r.annNo ? `<span class="mono">${esc(r.annNo)}</span>` : '')}
+      ${item('Open to close', r.annOpen ? `${fmtDate(r.annOpen)} to ${fmtDate(r.annClose)}` : '')}
+      ${item('Applicant volume', funnelHTML(r), true)}
+      ${item('Certs issued', fmtDate(r.certs))}
+      ${item('Tentative offer', fmtDate(r.to))}
+      ${item('Final offer', fmtDate(r.fo))}
+      ${item('EOD (pay period start)', fmtDate(r.eod))}
+      ${item('Positions filled', `${r.filled || 0} of ${r.vacancies || 1}`)}
+      ${r.originalId ? item('Re-recruit of', `<button class="link" type="button" data-action="open" data-id="${r.originalId}">#${r.originalId}</button>`) : ''}
+      ${child ? item('Re-recruited as', `<button class="link" type="button" data-action="open" data-id="${child.id}">#${child.id}</button>`) : ''}
+    </dl>
+  </section>
+  <section class="d-sec">
+    <h3>Documents</h3>
+    ${r.attachments.length ? `<ul class="files">${r.attachments.map(a => `<li><span class="mono">${esc(a.name)}</span><span class="sub">${fmtSize(a.size)} · ${esc(a.by)} · ${fmtDate(a.date)}</span></li>`).join('')}</ul>` : '<p class="sub">No documents yet.</p>'}
+    <div class="row"><label class="btn" for="file">Attach files</label><input type="file" id="file" multiple hidden></div>
+    <p class="hint">The demo keeps file names only. In the real app these are SharePoint list attachments. Keep certificates with SSNs in the staffing system.</p>
+  </section>
+  <section class="d-sec">
+    <h3>Notes</h3>
+    ${r.notes ? `<p class="notes">${esc(r.notes)}</p>` : '<p class="sub">No notes.</p>'}
+  </section>`;
+}
+
+// ---------- Drawer: edit form ----------
+const SHOWIF = { term: r => r.appt === 'Term', backfill: r => r.reason === 'Backfill (Attrition)' };
+const ALL_MANAGERS = OFFICES.flatMap(o => MANAGERS[o]);
+const FORM = [
+  ['Intent to recruit', [
+    ['title', 'Position title', 'text', { req: true, full: true }],
+    ['series', 'Series', 'text', { req: true, ph: '0511' }],
+    ['grade', 'Grade', 'text', { req: true, ph: 'GS-12/13' }],
+    ['office', 'Office', 'select', { req: true, opts: OFFICES }],
+    ['location', 'Duty location', 'text', { req: true, ph: 'Washington, DC' }],
+    ['vacancies', 'Number of vacancies', 'number', { min: 1 }],
+    ['recType', 'Recruitment type', 'select', { req: true, opts: REC_TYPES }],
+    ['appt', 'Appointment type', 'select', { req: true, opts: ['Permanent', 'Term'] }],
+    ['termNTE', 'Term NTE date', 'date', { showIf: 'term' }],
+    ['funding', 'Funding source', 'funding', {}],
+    ['reason', 'Reason', 'select', { req: true, opts: ['New Position', 'Backfill (Attrition)'] }],
+    ['departing', 'Departing employee', 'text', { showIf: 'backfill' }],
+    ['departureDate', 'Departure date', 'date', { showIf: 'backfill' }],
+    ['justification', 'Justification', 'textarea', { full: true }],
+    ['supervisor', 'Supervisor (first approver)', 'person', { req: true, opts: OFFICES.map(o => DIRECTOR[o]) }],
+  ]],
+  ['Assignment', [
+    ['hr', 'HR specialist', 'person', { opts: HR }],
+    ['hm', 'Hiring manager', 'person', { opts: ALL_MANAGERS }],
+  ]],
+  ['Lifecycle', [
+    ['status', 'Status', 'status', {}],
+    ['annNo', 'Announcement number', 'text', {}],
+    ['annOpen', 'Announcement open', 'date', {}],
+    ['annClose', 'Announcement close', 'date', {}],
+    ['applicants', 'Applicants', 'number', { min: 0 }],
+    ['qualified', 'Qualified', 'number', { min: 0 }],
+    ['referred', 'Referred', 'number', { min: 0 }],
+    ['certs', 'Certs issued', 'date', {}],
+    ['to', 'Tentative offer', 'date', {}],
+    ['fo', 'Final offer', 'date', {}],
+    ['eod', 'EOD date', 'date', {}],
+    ['filled', 'Positions filled', 'number', { min: 0 }],
+    ['notes', 'Notes', 'textarea', { full: true }],
+  ]],
+];
+
+function fieldHTML([key, label, type, o], r, isNew) {
+  const id = 'e-' + key, v = r[key] ?? '', req = o.req ? ' required' : '';
+  const hidden = o.showIf && !SHOWIF[o.showIf](r) ? ' hidden' : '';
+  const wrap = (inner, full) => `<div class="field${full || o.full ? ' full' : ''}"${o.showIf ? ` data-showif="${o.showIf}"` : ''}${hidden}><label for="${id}">${label}${o.req ? ' <span class="req" aria-hidden="true">*</span>' : ''}</label>${inner}</div>`;
+  switch (type) {
+    case 'funding':
+      return `<fieldset class="field full"><legend>Funding source (check both if split)</legend>
+        <label class="check"><input type="checkbox" id="e-fundPerm" name="fundPerm"${r.fundPerm ? ' checked' : ''}> Permanent funds (annual appropriation)</label>
+        <label class="check"><input type="checkbox" id="e-fundSurge" name="fundSurge"${r.fundSurge ? ' checked' : ''}> Surge funds</label></fieldset>`;
+    case 'select': case 'person':
+      return wrap(`<select id="${id}" name="${key}"${req}><option value="">${type === 'person' ? 'Unassigned' : 'Choose…'}</option>${o.opts.map(x => `<option${x === v ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select>`);
+    case 'textarea':
+      return wrap(`<textarea id="${id}" name="${key}" rows="3">${esc(v)}</textarea>`, true);
+    case 'status':
+      if (isNew || ['Draft', 'Pending Approval'].includes(r.status)) {
+        return wrap(`<input id="${id}" value="${esc(r.status)}" disabled><p class="hint">Only the approval flow moves an action out of Draft and Pending Approval.</p>`);
+      }
+      return wrap(`<select id="${id}" name="status">${STAGES.slice(2).map(s => `<option${s === r.status ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select>`);
+    default:
+      return wrap(`<input id="${id}" name="${key}" type="${type}" value="${esc(v)}"${req}${o.min != null ? ` min="${o.min}"` : ''}${o.ph ? ` placeholder="${esc(o.ph)}"` : ''}>`);
+  }
+}
+
+function formHTML(r, isNew) {
+  return `<form class="form" id="edit-form" novalidate>
+    ${FORM.map(([sec, fields]) => `<section class="d-sec"><h3>${sec}</h3><div class="fields">${fields.map(f => fieldHTML(f, r, isNew)).join('')}</div></section>`).join('')}
+    <p class="err" id="form-err" hidden></p>
+    <div class="form-actions"><button class="btn primary" type="submit">${isNew ? 'Save draft' : 'Save changes'}</button><button class="btn ghost" type="button" data-action="cancel-edit">Discard</button></div>
+  </form>`;
+}
+
+function readForm(form, base) {
+  const r = { ...base };
+  for (const el of form.elements) {
+    if (!el.name) continue;
+    if (el.type === 'checkbox') r[el.name] = el.checked;
+    else if (el.type === 'number') r[el.name] = el.value === '' ? null : Math.max(0, Math.round(Number(el.value)));
+    else if (el.type === 'date') r[el.name] = el.value || null;
+    else r[el.name] = el.value.trim();
+  }
+  return r;
+}
+
+function drawerHTML(r) {
+  const isNew = r === state.draft;
+  const child = state.records.find(x => x.originalId === r.id);
+  return `
+  <header class="d-head">
+    <div>
+      <div class="d-id">${isNew ? 'New action' : `#${r.id}`} · ${esc(r.office || 'No office yet')}</div>
+      <div class="d-title-row"><h2 id="d-title" tabindex="-1">${esc(r.title || 'New intent to recruit')}</h2>${pill(r.status)}</div>
+      ${r.series ? `<div class="sub mono">${esc(r.series)} · ${esc(r.grade)} · ${esc(r.location)}</div>` : ''}
+    </div>
+    <button class="icon-btn" type="button" data-action="close" aria-label="Close">×</button>
+  </header>
+  ${isNew ? '' : trackerHTML(r)}
+  ${state.editing ? '' : `<div class="d-actions">${actionsHTML(r, child)}</div>`}
+  ${state.editing ? formHTML(r, isNew) : viewHTML(r, child)}`;
+}
+
+function renderDrawer() {
+  const r = current();
+  if (!r) { closeDrawer(); return; }
+  $('#drawer').innerHTML = drawerHTML(r);
+}
+function showDrawer() {
+  renderDrawer();
+  $('#drawer').hidden = false; $('#scrim').hidden = false;
+  document.body.classList.add('locked');
+  $('#drawer').scrollTop = 0;
+  $('#d-title')?.focus();
+  renderTable();
+}
+function openRecord(id) {
+  state.selected = id; state.draft = null; state.editing = false; state.ask = null;
+  showDrawer();
+}
+function closeDrawer() {
+  const id = state.selected;
+  Object.assign(state, { selected: null, draft: null, editing: false, ask: null });
+  $('#drawer').hidden = true; $('#scrim').hidden = true;
+  document.body.classList.remove('locked');
+  renderTable();
+  document.querySelector(`tr[data-id="${id}"]`)?.focus();
+}
+function newDraft() {
+  const office = OFFICES.find(o => MANAGERS[o].includes(state.user)) || '';
+  state.draft = {
+    id: nextId(), title: '', series: '', grade: '', office, location: '', vacancies: 1, recType: '', appt: 'Permanent', termNTE: null,
+    fundPerm: false, fundSurge: false, reason: '', departing: '', departureDate: null, justification: '',
+    createdBy: state.user, created: TODAY, modified: TODAY, supervisor: office ? DIRECTOR[office] : '', status: 'Draft', approvalStep: 0,
+    submitted: null, approved: null, history: [], hr: '', hm: office ? state.user : '', annNo: '', annOpen: null, annClose: null,
+    applicants: null, qualified: null, referred: null, certs: null, to: null, fo: null, eod: null, filled: 0, originalId: null, notes: '', attachments: [],
+  };
+  state.selected = state.draft.id; state.editing = true; state.ask = null;
+  showDrawer();
+}
+
+// ---------- Record actions ----------
+function commit(r, msg) {
+  r.modified = TODAY;
+  state.ask = null;
+  persist();
+  renderAll();
+  if (msg) toast(msg);
+}
+const ACTIONS = {
+  close: () => closeDrawer(),
+  open: el => openRecord(Number(el.dataset.id)),
+  edit: () => { state.editing = true; state.ask = null; renderDrawer(); $('#e-title')?.focus(); },
+  'cancel-edit': () => { if (current() === state.draft) closeDrawer(); else { state.editing = false; renderDrawer(); } },
+  ask: el => { state.ask = el.dataset.kind; renderDrawer(); $('#ask-reason')?.focus(); },
+  'ask-back': () => { state.ask = null; renderDrawer(); },
+  'confirm-ask': () => {
+    const r = current(), why = $('#ask-reason').value.trim();
+    if (!why) { $('#ask-err').hidden = false; $('#ask-reason').focus(); return; }
+    const cancel = state.ask === 'cancel';
+    r.status = cancel ? 'Cancelled' : 'Re-recruit';
+    r.notes = (r.notes ? r.notes + '\n' : '') + why;
+    commit(r, cancel ? `#${r.id} cancelled.` : `#${r.id} marked re-recruit. Use “Create re-recruit” to start the new announcement.`);
+  },
+  submit: () => {
+    const r = current();
+    Object.assign(r, { status: 'Pending Approval', approvalStep: 0, submitted: TODAY });
+    r.history.push({ date: TODAY, who: state.user, step: '', action: 'Submitted for approval', comment: '' });
+    commit(r, `Approval request sent to ${r.supervisor} (Supervisor).`);
+  },
+  approve: () => {
+    const r = current(), step = APPROVAL_STEPS[r.approvalStep];
+    r.history.push({ date: TODAY, who: state.user, step, action: 'Approved', comment: $('#ap-comment').value.trim() });
+    r.approvalStep++;
+    if (r.approvalStep === APPROVAL_STEPS.length) {
+      Object.assign(r, { status: 'Approved', approved: TODAY });
+      commit(r, `Approved. Email sent to ${r.createdBy}.`);
+    } else {
+      commit(r, `Approval request sent to ${approverFor(r, r.approvalStep)} (${APPROVAL_STEPS[r.approvalStep]}).`);
+    }
+  },
+  return: () => {
+    const r = current(), comment = $('#ap-comment').value.trim();
+    if (!comment) { $('#ap-err').hidden = false; $('#ap-comment').focus(); return; }
+    r.history.push({ date: TODAY, who: state.user, step: APPROVAL_STEPS[r.approvalStep], action: 'Returned', comment });
+    Object.assign(r, { status: 'Draft', approvalStep: 0 });
+    commit(r, `Returned to Draft. Email sent to ${r.createdBy}.`);
+  },
+  'act-as': el => { state.user = el.dataset.who; $('#user').value = state.user; persist(); renderAll(); toast(`Signed in as ${state.user}.`); },
+  advance: () => {
+    const r = current(), next = STAGES[STAGES.indexOf(r.status) + 1];
+    r.status = next;
+    if (next === 'Announcement Open') { r.annOpen ||= TODAY; r.annClose ||= addDays(TODAY, 14); r.annNo ||= annNumber(r); }
+    if (next === 'Certs Issued') r.certs ||= TODAY;
+    if (next === 'Tentative Offer') r.to ||= TODAY;
+    if (next === 'Final Offer / EOD') { r.fo ||= TODAY; r.eod ||= payPeriodStart(addDays(TODAY, 14)); }
+    commit(r, `#${r.id} moved to ${next}.`);
+  },
+  fill: () => {
+    const r = current();
+    Object.assign(r, { status: 'Filled', filled: r.vacancies || 1 });
+    commit(r, `#${r.id} filled: ${r.filled} toward the hiring goal.`);
+  },
+  'create-rr': () => {
+    const o = current();
+    const c = {
+      ...JSON.parse(JSON.stringify(o)), id: nextId(), status: 'Approved', approvalStep: 0, created: TODAY, createdBy: state.user, originalId: o.id,
+      vacancies: Math.max(1, (o.vacancies || 1) - (o.filled || 0)), filled: 0, annNo: '', annOpen: null, annClose: null,
+      applicants: null, qualified: null, referred: null, certs: null, to: null, fo: null, eod: null, notes: '',
+      attachments: o.attachments.filter(a => /^(PD_|Job_Analysis_)/.test(a.name)),
+    };
+    c.history.push({ date: TODAY, who: state.user, step: '', action: `Re-recruit of #${o.id}`, comment: 'Original approval carried over.' });
+    state.records.push(c);
+    commit(c);
+    openRecord(c.id);
+    toast(`Created re-recruit #${c.id} at Approved, carrying over the original approval.`);
+  },
+  stage: el => { state.stage = state.stage === el.dataset.stage ? null : el.dataset.stage; renderAll(); },
+  'clear-stage': () => { state.stage = null; renderAll(); },
+  view: el => { state.view = el.dataset.view; state.stage = null; renderAll(); },
+  sort: el => {
+    const key = el.dataset.key;
+    state.sort = state.sort.key === key ? { key, dir: -state.sort.dir } : { key, dir: key === 'title' ? 1 : -1 };
+    renderTable();
+  },
+  clear: () => {
+    Object.assign(state, { stage: null, q: '', office: '', funding: '', appt: '' });
+    $('#q').value = ''; $('#f-office').value = ''; $('#f-funding').value = ''; $('#f-appt').value = '';
+    renderAll();
+  },
+};
+
+// ---------- Wiring ----------
+$('#user').innerHTML = ['Human Resources', 'Approvers', 'Hiring managers'].map(g => `<optgroup label="${g}">${PEOPLE.filter(p => p.group === g).map(p => `<option value="${esc(p.name)}"${p.name === state.user ? ' selected' : ''}>${esc(p.name)} (${esc(p.role)})</option>`).join('')}</optgroup>`).join('');
+$('#f-office').innerHTML = `<option value="">All offices</option>${OFFICES.map(o => `<option>${esc(o)}</option>`).join('')}`;
+$('#f-funding').innerHTML = '<option value="">All funding</option><option value="perm">Uses permanent funds</option><option value="surge">Uses surge funds</option><option value="split">Split funded</option>';
+$('#f-appt').innerHTML = '<option value="">All appointments</option><option>Permanent</option><option>Term</option>';
+
+$('#user').addEventListener('change', e => { state.user = e.target.value; state.ask = null; persist(); renderAll(); });
+$('#q').addEventListener('input', e => { state.q = e.target.value.trim().toLowerCase().replace(/^#/, ''); renderTable(); });
+$('#f-office').addEventListener('change', e => { state.office = e.target.value; renderTable(); });
+$('#f-funding').addEventListener('change', e => { state.funding = e.target.value; renderTable(); });
+$('#f-appt').addEventListener('change', e => { state.appt = e.target.value; renderTable(); });
+$('#new').addEventListener('click', newDraft);
+$('#reset').addEventListener('click', () => {
+  store.clear();
+  state.records = generate();
+  if (state.selected != null) closeDrawer();
+  ACTIONS.clear();
+  toast('Demo data reset to the original 100 actions.');
+});
+$('#scrim').addEventListener('click', closeDrawer);
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-action]');
+  if (el && ACTIONS[el.dataset.action]) { ACTIONS[el.dataset.action](el); return; }
+  const tr = e.target.closest('#tbody tr[data-id]');
+  if (tr) openRecord(Number(tr.dataset.id));
+});
+$('#tbody').addEventListener('keydown', e => {
+  const tr = e.target.closest('tr[data-id]');
+  if (tr && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openRecord(Number(tr.dataset.id)); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#drawer').hidden) closeDrawer(); });
+
+const drawer = $('#drawer');
+drawer.addEventListener('change', e => {
+  if (e.target.id === 'file') {
+    const r = current();
+    for (const f of e.target.files) r.attachments.push({ name: f.name, size: f.size, date: TODAY, by: state.user });
+    const n = e.target.files.length;
+    if (r === state.draft) renderDrawer(); else commit(r);
+    toast(`${n} file${n === 1 ? '' : 's'} attached.`);
+    return;
+  }
+  const form = e.target.form;
+  if (!form) return;
+  if (e.target.name === 'office' && form.elements.supervisor) form.elements.supervisor.value = DIRECTOR[e.target.value] || '';
+  const tmp = readForm(form, current());
+  form.querySelectorAll('[data-showif]').forEach(el => { el.hidden = !SHOWIF[el.dataset.showif](tmp); });
+});
+drawer.addEventListener('submit', e => {
+  e.preventDefault();
+  const form = e.target, before = current(), isNew = before === state.draft;
+  const missing = [...form.elements].find(el => el.required && !el.value.trim());
+  if (missing) {
+    const err = $('#form-err');
+    err.textContent = `${form.querySelector(`label[for="${missing.id}"]`).textContent.replace('*', '').trim()} is required.`;
+    err.hidden = false;
+    missing.focus();
+    return;
+  }
+  const oldHr = isNew ? '' : before.hr, oldHm = isNew ? '' : before.hm;
+  const r = readForm(form, before);
+  r.vacancies = Math.max(1, r.vacancies || 1);
+  r.filled = r.filled || 0;
+  if (r.appt !== 'Term') r.termNTE = null;
+  if (r.reason !== 'Backfill (Attrition)') { r.departing = ''; r.departureDate = null; }
+  state.editing = false;
+  let target = before;
+  if (isNew) { state.records.push(r); state.draft = null; target = r; }
+  else Object.assign(before, r);
+  commit(target, isNew ? `Draft #${r.id} saved. Submit it for approval when it is ready.` : `#${r.id} saved.`);
+  for (const [who, old, role] of [[r.hr, oldHr, 'HR specialist'], [r.hm, oldHm, 'hiring manager']]) {
+    if (who && who !== old && who !== state.user) toast(`Assignment email sent to ${who} (${role}).`);
+  }
+});
+
+renderAll();
+})();
+</script>
+</body>
+</html>

@@ -8,6 +8,8 @@ This app tracks about 60 recruitment actions a year. Each one runs from **Intent
 | Canvas app `Recruitment Tracker` | Generated from the list, then customized (step 3). |
 | Flow `RecruitmentApproval` | The sequential 3-step approval (step 4). |
 
+To see it working before you build anything, open [`demo.html`](demo.html) in a browser. It's a standalone mock-up with 100 fictional actions.
+
 Everything uses standard connectors (SharePoint, Approvals, Office 365 Outlook). You don't need a premium license, and all of them are available in GCC.
 
 ## Decisions and assumptions
